@@ -1,0 +1,18 @@
+FROM node:20-slim
+
+RUN apt-get update && \
+  apt-get install -y libssl-dev && \
+  rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+# set these only for build
+ENV NEXTAUTH_URL="http://localhost:3000"
+ENV NEXTAUTH_SECRET="--secret--"
+ENV GOOGLE_CLIENT_ID="--google-client-id--"
+ENV GOOGLE_CLIENT_SECRET="--google-client-secret--"
+
+# Build next.js app
+ADD . /app

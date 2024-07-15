@@ -1,9 +1,5 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
-/.pnp
-.pnp.js
 
 # testing
 /coverage
@@ -15,10 +11,13 @@ next-env.d.ts
 
 # production
 /build
+/dist
 
 # misc
+.git
 .DS_Store
 *.pem
+Dockerfile
 
 # debug
 npm-debug.log*
@@ -31,11 +30,5 @@ yarn-error.log*
 .env
 .env*.local
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
-
-# idea files
-.idea
