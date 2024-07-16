@@ -11,12 +11,13 @@ let post = {
   name: "Hello World",
 };
 
-export const postRouter = createTRPCRouter({
-  hello: publicProcedure
-    .input(z.object({ text: z.string() }))
+export const agentRouter = createTRPCRouter({
+  list: protectedProcedure
+    .input(z.object({ page: z.number().optional() }))
     .query(({ input }) => {
+      const pageNum = input.page ?? 1;
       return {
-        greeting: `Hello ${input.text}`,
+        agents: [],
       };
     }),
 

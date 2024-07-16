@@ -50,12 +50,13 @@ import Link from "next/link";
 
 import BlueXBlueLogo from "~/app/_icons/bluex-blue-logo";
 import { Sheet, SheetContent, SheetTrigger } from "~/components/ui/sheet";
+import { headers } from "next/headers";
 
 const NavItems = [
   {
     title: "Dashboard",
     icon: Home,
-    path: "/",
+    path: "/dashboard",
   },
   {
     title: "Agents",
@@ -76,13 +77,14 @@ const NavItems = [
 
 export default async function AppFrame({
   session,
-  currentPath,
   children,
 }: {
   session: Session | null;
-  currentPath: string;
   children: React.ReactNode;
 }) {
+  const headerList = headers();
+  const currentPath = headerList.get('x-current-path') ?? '';
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
