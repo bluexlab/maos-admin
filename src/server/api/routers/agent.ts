@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 let post = {
   id: 1,
@@ -12,24 +8,20 @@ let post = {
 };
 
 export const agentRouter = createTRPCRouter({
-  list: protectedProcedure
-    .input(z.object({ page: z.number().optional() }))
-    .query(({ input }) => {
-      const pageNum = input.page ?? 1;
-      return {
-        agents: [],
-      };
-    }),
+  list: protectedProcedure.input(z.object({ page: z.number().optional() })).query(({ input }) => {
+    const pageNum = input.page ?? 1;
+    return {
+      agents: [],
+    };
+  }),
 
-  create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .mutation(async ({ input }) => {
-      // simulate a slow db call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  create: protectedProcedure.input(z.object({ name: z.string().min(1) })).mutation(async ({ input }) => {
+    // simulate a slow db call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      post = { id: post.id + 1, name: input.name };
-      return post;
-    }),
+    post = { id: post.id + 1, name: input.name };
+    return post;
+  }),
 
   getLatest: protectedProcedure.query(() => {
     return post;

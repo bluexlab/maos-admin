@@ -16,11 +16,7 @@ function UserDropdown({ session }: { session: Session | null }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="overflow-hidden rounded-full"
-        >
+        <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
           <Avatar>
             <AvatarImage />
             <AvatarFallback>{nameInitial}</AvatarFallback>
@@ -39,13 +35,7 @@ function UserDropdown({ session }: { session: Session | null }) {
   );
 }
 
-import {
-  Home,
-  Menu,
-  Package,
-  ShoppingCart,
-  Users
-} from "lucide-react";
+import { Home, Menu, Package, Settings, ShoppingCart, Users } from "lucide-react";
 import Link from "next/link";
 
 import BlueXBlueLogo from "~/app/_icons/bluex-blue-logo";
@@ -69,9 +59,14 @@ const NavItems = [
     path: "/models",
   },
   {
-    title: "Reports",
+    title: "Users",
     icon: Users,
-    path: "/reports",
+    path: "/users",
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    path: "/settings",
   },
 ];
 
@@ -83,7 +78,7 @@ export default async function AppFrame({
   children: React.ReactNode;
 }) {
   const headerList = headers();
-  const currentPath = headerList.get('x-current-path') ?? '';
+  const currentPath = headerList.get("x-current-path") ?? "";
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -125,42 +120,37 @@ export default async function AppFrame({
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0 md:hidden"
-              >
+              <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <nav className="grid gap-2 text-lg font-medium">
-              <Link
-                  href="#"
-                  className="flex items-center gap-2 text-lg font-semibold"
-                >
+                <Link href="#" className="flex items-center gap-2 text-lg font-semibold">
                   <BlueXBlueLogo className="h-6 w-6" />
                   <span className="sr-only">MAOS Admin</span>
                 </Link>
-                { NavItems.map((item, index) => currentPath.startsWith(item.path) ? (
-                  <div
-                    key={index}
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.title}
-                  </div>
-                ):(
-                  <Link
-                    key={index}
-                    href={item.path}
-                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.title}
-                  </Link>))
-                  }
+                {NavItems.map((item, index) =>
+                  currentPath.startsWith(item.path) ? (
+                    <div
+                      key={index}
+                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.title}
+                    </div>
+                  ) : (
+                    <Link
+                      key={index}
+                      href={item.path}
+                      className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.title}
+                    </Link>
+                  ),
+                )}
               </nav>
             </SheetContent>
           </Sheet>
@@ -178,9 +168,7 @@ export default async function AppFrame({
           </div>
           <UserDropdown session={session} />
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          {children}
-        </main>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">{children}</main>
       </div>
     </div>
   );
