@@ -672,7 +672,8 @@ export interface components {
             /** Format: int64 */
             id: number;
             /** Format: int64 */
-            agentId: number;
+            agent_id: number;
+            agent_name: string;
             minAgentVersion?: string;
             content: Record<string, never>;
             /** Format: int64 */
@@ -1774,7 +1775,9 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    content: Record<string, never>;
+                    content: {
+                        [key: string]: string;
+                    };
                     min_agent_version?: string;
                     user: string;
                 };

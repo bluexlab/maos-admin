@@ -35,7 +35,7 @@ function UserDropdown({ session }: { session: Session | null }) {
   );
 }
 
-import { Home, Menu, Package, Settings, ShoppingCart, Users } from "lucide-react";
+import { Bot, Home, Menu, Package, Settings, ShoppingCart, Users, Truck } from "lucide-react";
 import Link from "next/link";
 
 import BlueXBlueLogo from "~/app/_icons/bluex-blue-logo";
@@ -50,8 +50,13 @@ const NavItems = [
   },
   {
     title: "Agents",
-    icon: ShoppingCart,
+    icon: Bot,
     path: "/agents",
+  },
+  {
+    title: "Deployments",
+    icon: Truck,
+    path: "/deployments",
   },
   {
     title: "Models",

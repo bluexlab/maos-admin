@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { RemoveAgentAlert } from "./remove-agent-alert";
 import { EditAgentDialog } from "./edit-agent-dialog";
+import Link from "next/link";
 
 type Agent = {
   id: number;
@@ -74,11 +75,11 @@ const AgentList = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <Table className="w-full rounded-lg shadow-sm">
+      <Table className="w-full max-w-[1000px] rounded-lg shadow-sm">
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Created at</TableHead>
+            {/* <TableHead>Created at</TableHead> */}
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -86,7 +87,7 @@ const AgentList = ({
           {agents.map((agent) => (
             <TableRow key={agent.id}>
               <TableCell>{agent.name}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 {new Date(agent.created_at * 1000)
                   .toLocaleString("en-US", {
                     year: "numeric",
@@ -100,18 +101,21 @@ const AgentList = ({
                   })
                   .replace(/(\d+)\/(\d+)\/(\d+),/, "$3-$1-$2")}{" "}
                 +8
+              </TableCell> */}
+              <TableCell className="w-20">
+                <Button asChild>
+                  <Link href={`/agents/${agent.id}/config`}>Config</Link>
+                </Button>
+              </TableCell>
+              <TableCell className="w-20">
+                {agent.updatable && <Button onClick={() => editAgent(agent)}>Edit</Button>}
               </TableCell>
               <TableCell className="w-20">
                 {agent.updatable && (
-                  <Button variant="danger" onClick={() => editAgent(agent)}>
-                    Edit
+                  <Button variant="danger" onClick={() => alertRemoveAgent(agent.id)}>
+                    Remove
                   </Button>
                 )}
-              </TableCell>
-              <TableCell className="w-20">
-                <Button variant="danger" onClick={() => alertRemoveAgent(agent.id)}>
-                  Remove
-                </Button>
               </TableCell>
             </TableRow>
           ))}

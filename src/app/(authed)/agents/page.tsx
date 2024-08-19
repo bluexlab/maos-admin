@@ -7,7 +7,7 @@ import { api } from "~/trpc/server";
 export default async function Page({ searchParams }: { searchParams: { page: string } }) {
   const session = await getServerAuthSession();
   const page = parseInt(searchParams.page) || 1;
-  const agents = await ResultAsync.fromThrowable(() => api.agents.list({ page }))();
+  const agents = await api.agents.list({ page });
 
   return (
     <AppFrame session={session}>
