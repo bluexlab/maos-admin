@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { settings } from "~/drizzle/schema";
-import { encryptApiToken } from "~/lib/utils";
+import { encryptApiToken } from "~/lib/apiToken";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -17,7 +17,7 @@ export const settingRouter = createTRPCRouter({
 
       await ctx.db
         .insert(settings)
-        .values({ key: "apiToken", value: encrypted })
+        .values({ key: "api-token", value: encrypted })
         .onConflictDoUpdate({
           target: [settings.key],
           set: { value: encrypted, updatedAt: sql`NOW()` },

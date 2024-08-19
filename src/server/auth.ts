@@ -36,7 +36,6 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     session: ({ session, token }) => {
-      console.log("session", session, token);
       return {
         ...session,
         user: {

@@ -1,10 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { describe } from "vitest";
+
+import { settings } from "~/drizzle/schema";
+import { decryptApiToken } from "~/lib/apiToken";
 import { testWithDb } from "~/test/integration/fixtures/db-fixtures";
 import { useCaller } from "~/test/integration/helpers/test-caller";
 import { useSession } from "~/test/integration/helpers/test-session";
-import { settings } from "~/drizzle/schema";
-import { decryptApiToken, encryptApiToken } from "~/lib/utils";
 
 describe.concurrent("settingRouter API", () => {
   describe("without session", () => {

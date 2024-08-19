@@ -9,7 +9,8 @@
     "lint": "next lint",
     "start": "next start",
     "test:unit": "vitest run",
-    "test:unit:dev": "vitest dev"
+    "test:unit:dev": "vitest dev",
+    "openapi-typescript": "openapi-typescript ./external/maos-core/api.yaml -o ./src/types/maos-core-scheme.d.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.4.2",
@@ -33,10 +34,12 @@
     "drizzle-orm": "^0.33.0",
     "geist": "^1.3.0",
     "lucide-react": "^0.408.0",
+    "neverthrow": "^7.0.1",
     "next": "^14.2.4",
     "next-auth": "^4.24.7",
     "next-themes": "^0.3.0",
     "nextjs-toploader": "^1.6.12",
+    "openapi-fetch": "^0.11.1",
     "postgres": "^3.4.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -58,6 +61,7 @@
     "drizzle-kit": "^0.24.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.4",
+    "openapi-typescript": "^7.3.0",
     "postcss": "^8.4.39",
     "prettier": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.6.5",
