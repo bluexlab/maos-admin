@@ -1,5 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { count, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import { getServerSession, type DefaultSession, type NextAuthOptions } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import GoogleProvider from "next-auth/providers/google";
@@ -35,7 +35,7 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, token }) => {
+    session: ({ session }) => {
       return {
         ...session,
         user: {
@@ -54,6 +54,12 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (user.name && user.email) {
+        // check if the user is a valid user
+        const [existingUser] = await db.select().from(users).where(eq(users.email, user.email));
+        if (existingUser) {
+          return true;
+        }
+
         // Check if the user is in the invitingUsers table.
         // If found, remove the user from invitingUsers and allow sign-in.
         // If not found, deny sign-in for non-invited users.

@@ -1,13 +1,12 @@
-import { describe } from "vitest";
 import { eq } from "drizzle-orm";
+import { describe } from "vitest";
 
 import { TRPCError } from "@trpc/server";
+import { accounts, invitingUsers, users } from "~/drizzle/schema";
 import { testWithDb } from "~/test/integration/fixtures/db-fixtures";
+import { buildUser } from "~/test/integration/fixtures/user-fixture";
 import { useCaller } from "~/test/integration/helpers/test-caller";
 import { useSession } from "~/test/integration/helpers/test-session";
-import { users, invitingUsers, accounts } from "~/drizzle/schema";
-import { withValidUser } from "~/test/integration/contexts/users";
-import { buildUser } from "~/test/integration/fixtures/user-fixture";
 
 describe.concurrent("userRouter API", () => {
   describe("without session", () => {

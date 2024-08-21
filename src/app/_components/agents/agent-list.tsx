@@ -1,6 +1,10 @@
 "use client";
 
 import { type Session } from "next-auth";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import Paginator from "~/app/_components/paginator";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -10,16 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import Paginator from "~/app/_components/paginator";
 import { clamp } from "~/lib/numbers";
-import { useState } from "react";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { AddAgentDialog } from "./add-agent-dialog";
-import { RemoveAgentAlert } from "./remove-agent-alert";
 import { EditAgentDialog } from "./edit-agent-dialog";
-import Link from "next/link";
+import { RemoveAgentAlert } from "./remove-agent-alert";
 
 type Agent = {
   id: number;
@@ -75,7 +74,7 @@ const AgentList = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <Table className="w-full max-w-[1000px] rounded-lg shadow-sm">
+      <Table className="w-full rounded-lg shadow-sm">
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
@@ -87,26 +86,6 @@ const AgentList = ({
           {agents.map((agent) => (
             <TableRow key={agent.id}>
               <TableCell>{agent.name}</TableCell>
-              {/* <TableCell>
-                {new Date(agent.created_at * 1000)
-                  .toLocaleString("en-US", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: false,
-                    timeZone: "Asia/Singapore",
-                  })
-                  .replace(/(\d+)\/(\d+)\/(\d+),/, "$3-$1-$2")}{" "}
-                +8
-              </TableCell> */}
-              <TableCell className="w-20">
-                <Button asChild>
-                  <Link href={`/agents/${agent.id}/config`}>Config</Link>
-                </Button>
-              </TableCell>
               <TableCell className="w-20">
                 {agent.updatable && <Button onClick={() => editAgent(agent)}>Edit</Button>}
               </TableCell>
@@ -132,11 +111,13 @@ const AgentList = ({
 
       <AddAgentDialog open={openAddAgentDialog} onOpenChange={setOpenAddAgentDialog} />
 
-      <EditAgentDialog
-        open={openEditAgentDialog}
-        onOpenChange={setOpenEditAgentDialog}
-        agent={agentToEdit}
-      />
+      {openEditAgentDialog && (
+        <EditAgentDialog
+          open={openEditAgentDialog}
+          onOpenChange={setOpenEditAgentDialog}
+          agent={agentToEdit}
+        />
+      )}
 
       <RemoveAgentAlert
         open={openRemoveAgentAlert}

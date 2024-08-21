@@ -433,11 +433,7 @@ export interface paths {
         /** Get the latest config of the Agent */
         get: operations["adminGetAgentConfig"];
         put?: never;
-        /**
-         * Add/Update one specific Agent
-         * @description Add/Update the latest config of the Agent. Because config is immutable, it will create a new config if the agent already has one.
-         */
-        post: operations["adminUpdateAgentConfig"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -469,10 +465,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get a specific Deployment. */
+        get: operations["adminGetDeployment"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a specific Deployment. Only draft deployments can be deleted. */
+        delete: operations["adminDeleteDeployment"];
         options?: never;
         head?: never;
         /** Update a specific Deployment. Only draft deployments can be updated. */
@@ -494,6 +492,40 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/deployments/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish the Deployment. Only draft deployments can be published. After publishing, the deployment will be in `deployed` status. */
+        post: operations["adminPublishDeployment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/configs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a specific Config. Only draft configs can be updated. */
+        patch: operations["adminUpdateConfig"];
         trace?: never;
     };
 }
@@ -674,18 +706,26 @@ export interface components {
             /** Format: int64 */
             agent_id: number;
             agent_name: string;
-            minAgentVersion?: string;
-            content: Record<string, never>;
+            min_agent_version?: string;
+            content: {
+                [key: string]: string;
+            };
             /** Format: int64 */
             created_at: number;
             created_by: string;
+            /** Format: int64 */
+            updated_at?: number;
+            updated_by?: string;
         };
         Deployment: {
             /** Format: int64 */
             id: number;
             name: string;
             /** @enum {string} */
-            status: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "cancelled";
+            status: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "retired" | "cancelled";
+            reviewers: string[];
+            /** Format: int64 */
+            config_suite_id?: number;
             /** Format: int64 */
             created_at: number;
             created_by: string;
@@ -695,6 +735,24 @@ export interface components {
             /** Format: int64 */
             finished_at?: number;
             finished_by?: string;
+        };
+        DeploymentDetail: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            /** @enum {string} */
+            status: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "retired" | "cancelled";
+            reviewers: string[];
+            /** Format: int64 */
+            created_at: number;
+            created_by: string;
+            /** Format: int64 */
+            approved_at?: number;
+            approved_by?: string;
+            /** Format: int64 */
+            finished_at?: number;
+            finished_by?: string;
+            configs?: components["schemas"]["Config"][];
         };
     };
     responses: {
@@ -1762,53 +1820,6 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
-    adminUpdateAgentConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Agent ID */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    content: {
-                        [key: string]: string;
-                    };
-                    min_agent_version?: string;
-                    user: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Successful created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["400"];
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agent not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            500: components["responses"]["500"];
-        };
-    };
     adminListDeployments: {
         parameters: {
             query?: {
@@ -1868,6 +1879,7 @@ export interface operations {
             content: {
                 "application/json": {
                     name: string;
+                    reviewers?: string[];
                     user: string;
                 };
             };
@@ -1895,6 +1907,80 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
+    adminGetDeployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Deployment ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Deployment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminDeleteDeployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Deployment ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deployment deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Deployment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
     adminUpdateDeployment: {
         parameters: {
             query?: never;
@@ -1908,6 +1994,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    user?: string;
                     name?: string;
                     reviewers?: string[];
                 };
@@ -1969,6 +2056,100 @@ export interface operations {
                 content?: never;
             };
             /** @description Deployment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminPublishDeployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Deployment ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description who is publishing the deployment */
+                    user: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["400"];
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Deployment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminUpdateConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Config ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    user: string;
+                    min_agent_version?: string;
+                    content?: {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Config"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Config not found */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -5,12 +5,16 @@ import { type SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 
-type AgentConfigEditorProps = {
-  config: Record<string, string>;
-  agentId: number;
+type ConfigEditorProps = {
+  deploymentId: bigint;
+  config: {
+    id: number;
+    minAgentVersion?: string;
+    content: Record<string, string>;
+  };
+  onSave: () => void;
 };
 
 type ConfigEntry = {
@@ -22,7 +26,7 @@ type FormValues = {
   entries: ConfigEntry[];
 };
 
-export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
+export function ConfigEditor({ config, deploymentId, onSave }: ConfigEditorProps) {
   const [minAgentVersion, setMinAgentVersion] = useState<string>("");
   const {
     register,
@@ -32,14 +36,14 @@ export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
     getValues,
   } = useForm<FormValues>({
     defaultValues: {
-      entries: Object.entries(config).map(([key, value]) => ({ key, value })),
+      entries: Object.entries(config.content).map(([key, value]) => ({ key, value })),
     },
   });
 
-  const mutation = api.agents.updateConfig.useMutation({
+  const mutation = api.deployments.updateConfig.useMutation({
     onSuccess: () => {
       toast.success("Configuration updated");
-      console.log("Configuration updated");
+      onSave();
     },
     onError: () => {
       toast.error("Failed to update configuration");
@@ -60,7 +64,7 @@ export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
       },
       {} as Record<string, string>,
     );
-    mutation.mutate({ id: agentId, content, minAgentVersion });
+    mutation.mutate({ id: deploymentId, configId: BigInt(config.id), content, minAgentVersion });
   };
 
   const validateUniqueKey = (key: string, index: number) => {
@@ -70,7 +74,7 @@ export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid gap-4 py-4">
+      {/* <div className="grid gap-4 py-4">
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="name" className="text-right">
             Minimal Agent Version
@@ -85,12 +89,20 @@ export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
       </div>
       <div className="my-4">
         <hr className="border-t border-gray-300" />
-      </div>
-      <div className="grid gap-4 py-4">
+      </div> */}
+      <div className="grid gap-4 bg-slate-800 p-4">
+        <div className="grid grid-cols-11 items-center gap-4">
+          <div className="col-span-2 flex items-center justify-center">Config Key</div>
+          <div className="col-span-2 flex items-center justify-center">Value</div>
+          <div className="col-span-2 flex items-center justify-center">QA</div>
+          <div className="col-span-2 flex items-center justify-center">Staging</div>
+          <div className="col-span-2 flex items-center justify-center">Production</div>
+          <div className="col-span-1 flex items-center justify-center"></div>
+        </div>
         {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-9 items-center gap-4">
+          <div key={field.id} className="grid grid-cols-11 items-center gap-4">
             <Input
-              className="col-span-4"
+              className="col-span-2"
               {...register(`entries.${index}.key`, {
                 required: "Key is required",
                 validate: (value) => validateUniqueKey(value, index),
@@ -98,10 +110,14 @@ export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
               placeholder="Key"
             />
             <Input
-              className="col-span-4"
+              className="col-span-2"
               {...register(`entries.${index}.value`, { required: "Value is required" })}
               placeholder="Value"
             />
+            <Input className="col-span-2" disabled value={""} />
+            <Input className="col-span-2" disabled value={""} />
+            <Input className="col-span-2" disabled value={""} />
+
             <Button type="button" onClick={() => remove(index)} className="col-span-1">
               Remove
             </Button>
@@ -116,17 +132,20 @@ export function AgentConfigEditor({ config, agentId }: AgentConfigEditorProps) {
           </div>
         ))}
       </div>
-      <Button
-        type="button"
-        className="w-40"
-        loading={loading}
-        onClick={() => append({ key: "", value: "" })}
-      >
-        New Config Entry
-      </Button>
-      <Button type="submit" className="ml-2 w-40" loading={loading}>
-        Save Configuration
-      </Button>
+
+      <div className="mx-4 mt-1 flex">
+        <Button
+          type="button"
+          className="w-40"
+          loading={loading}
+          onClick={() => append({ key: "", value: "" })}
+        >
+          New Config Entry
+        </Button>
+        <Button type="submit" className="ml-2 w-40" loading={loading}>
+          Save Configuration
+        </Button>
+      </div>
     </form>
   );
 }

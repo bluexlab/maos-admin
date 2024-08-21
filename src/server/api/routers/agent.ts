@@ -1,6 +1,6 @@
+import { err, ok } from "neverthrow";
 import createClient from "openapi-fetch";
 import { z } from "zod";
-import { Result, err, ok } from "neverthrow";
 
 import { env } from "~/env";
 import { getApiToken } from "~/lib/apiToken";
@@ -119,28 +119,4 @@ export const agentRouter = createTRPCRouter({
     }
     return ok(data.data);
   }),
-
-  updateConfig: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        content: z.record(z.string()),
-        minAgentVersion: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const client = createApiClient();
-      const headers = await getAuthHeaders();
-      const { error, response } = await client.POST(`/v1/admin/agents/{id}/config`, {
-        headers,
-        body: {
-          content: input.content,
-          user: ctx.session.user.email!,
-          min_agent_version: input.minAgentVersion ? input.minAgentVersion : undefined,
-        },
-        params: { path: { id: input.id } },
-      });
-      if (error) return handleApiError("update agent config", error, response);
-      return ok(true);
-    }),
 });

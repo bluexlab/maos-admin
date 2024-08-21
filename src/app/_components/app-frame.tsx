@@ -35,12 +35,12 @@ function UserDropdown({ session }: { session: Session | null }) {
   );
 }
 
-import { Bot, Home, Menu, Package, Settings, ShoppingCart, Users, Truck } from "lucide-react";
+import { Bot, Home, Menu, Package, Settings, Truck, Users } from "lucide-react";
 import Link from "next/link";
 
+import { headers } from "next/headers";
 import BlueXBlueLogo from "~/app/_icons/bluex-blue-logo";
 import { Sheet, SheetContent, SheetTrigger } from "~/components/ui/sheet";
-import { headers } from "next/headers";
 
 const NavItems = [
   {
