@@ -3,13 +3,15 @@ import { err, ok, Result, ResultAsync } from "neverthrow";
 import Link from "next/link";
 
 import AppFrame from "~/app/_components/app-frame";
-import { DeploymentEditor } from "~/app/_components/deployments/deployment-editor";
+import DeploymentEditor from "~/app/_components/deployments/deployment-editor";
+import DeploymentReviewer from "~/app/_components/deployments/deployment-reviewer";
 import { Button } from "~/components/ui/button";
 import { getServerAuthSession } from "~/server/auth";
 import { api } from "~/trpc/server";
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const session = await getServerAuthSession();
+  const [session, settings] = await Promise.all([getServerAuthSession(), api.settings.get()]);
+  const approveRequired = settings.data?.deployment_approve_required ?? false;
   const deploymentId = Result.fromThrowable(
     () => parseInt(params.id),
     (e) => (e instanceof Error ? e.message : String(e)),
@@ -36,9 +38,16 @@ export default async function Page({ params }: { params: { id: string } }) {
         </h1>
       </div>
       {deployment.match(
-        (dep) => (
-          <DeploymentEditor deploymentId={dep.id} />
-        ),
+        (dep) =>
+          dep.status === "reviewing" && dep.reviewers.includes(session!.user.email!) ? (
+            <DeploymentReviewer deploymentId={dep.id} />
+          ) : (
+            <DeploymentEditor
+              deploymentId={dep.id}
+              session={session!}
+              approveRequired={approveRequired}
+            />
+          ),
         (e) => {
           return <div className="text-red-500">Error: {String(e)}</div>;
         },

@@ -94,29 +94,29 @@ export const agentRouter = createTRPCRouter({
     return true;
   }),
 
-  getConfig: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
-    const client = createApiClient();
-    const headers = await getAuthHeaders();
+  // getConfig: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+  //   const client = createApiClient();
+  //   const headers = await getAuthHeaders();
 
-    const { data, error, response } = await client.GET(`/v1/admin/agents/{id}/config`, {
-      headers,
-      params: { path: { id: input.id } },
-    });
-    if (error) {
-      if (response.status === 404) {
-        const { data, error, response } = await client.GET(`/v1/admin/agents/{id}`, {
-          headers,
-          params: { path: { id: input.id } },
-        });
-        if (error) return handleApiError("get agent config", error, response);
-        return ok({
-          agent_id: data.data.id,
-          agent_name: data.data.name,
-          content: {},
-        });
-      }
-      return handleApiError("get agent config", error, response);
-    }
-    return ok(data.data);
-  }),
+  //   const { data, error, response } = await client.GET(`/v1/admin/agents/{id}/config`, {
+  //     headers,
+  //     params: { path: { id: input.id } },
+  //   });
+  //   if (error) {
+  //     if (response.status === 404) {
+  //       const { data, error, response } = await client.GET(`/v1/admin/agents/{id}`, {
+  //         headers,
+  //         params: { path: { id: input.id } },
+  //       });
+  //       if (error) return handleApiError("get agent config", error, response);
+  //       return ok({
+  //         agent_id: data.data.id,
+  //         agent_name: data.data.name,
+  //         content: {},
+  //       });
+  //     }
+  //     return handleApiError("get agent config", error, response);
+  //   }
+  //   return ok(data.data);
+  // }),
 });

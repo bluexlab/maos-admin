@@ -6,7 +6,7 @@ import { accounts, invitingUsers, users } from "~/drizzle/schema";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const userRouter = createTRPCRouter({
-  list: protectedProcedure
+  listPaginated: protectedProcedure
     .input(z.object({ page: z.number().optional(), pageSize: z.number().optional().default(10) }))
     .query(async ({ ctx, input }) => {
       const pageNum = input.page ?? 1;
@@ -17,6 +17,13 @@ export const userRouter = createTRPCRouter({
       ]);
 
       return { data, total: total?.total ?? 0 };
+    }),
+
+  list: protectedProcedure
+    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional().default(10) }))
+    .query(async ({ ctx }) => {
+      const data = await ctx.db.select().from(users).orderBy(users.email);
+      return { data };
     }),
 
   invite: protectedProcedure

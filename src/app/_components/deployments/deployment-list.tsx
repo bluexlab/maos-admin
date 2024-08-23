@@ -17,7 +17,7 @@ import { AddDeploymentDialog } from "./add-deployment-dialog";
 
 type Deployment = components["schemas"]["Deployment"];
 
-const DeploymentList = ({ deployments }: { session: Session; deployments: Deployment[] }) => {
+const DeploymentList = ({ deployments }: { deployments: Deployment[] }) => {
   const [openAddDeploymentDialog, setOpenAddDeploymentDialog] = useState(false);
 
   return (
@@ -29,6 +29,7 @@ const DeploymentList = ({ deployments }: { session: Session; deployments: Deploy
             <TableHead>Status</TableHead>
             <TableHead>Created By</TableHead>
             <TableHead>Deployed At</TableHead>
+            <TableHead>Notes</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -53,6 +54,12 @@ const DeploymentList = ({ deployments }: { session: Session; deployments: Deploy
                     })}
                   </p>
                 )}
+              </TableCell>
+              <TableCell>
+                {deployment.notes &&
+                  Object.entries(deployment.notes as Record<string, string>).map(([key, value]) => (
+                    <div key={key}>{`${key}: ${value}`}</div>
+                  ))}
               </TableCell>
               <TableCell className="w-20">
                 {deployment.status === "draft" ? (

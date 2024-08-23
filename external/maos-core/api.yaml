@@ -1203,36 +1203,6 @@ paths:
           description: Agent is referenced by config
         "500":
           $ref: "#/components/responses/500"
-  /v1/admin/agents/{id}/config:
-    get:
-      summary: Get the latest config of the Agent
-      operationId: adminGetAgentConfig
-      tags:
-        - Admin
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: Agent ID
-      responses:
-        "200":
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Config"
-                required:
-                  - data
-        "401":
-          description: Unauthorized
-        "404":
-          description: Agent not found
-        "500":
-          $ref: "#/components/responses/500"
   /v1/admin/deployments:
     get:
       summary: List Deployments
@@ -1251,10 +1221,23 @@ paths:
             type: integer
           description: Page number (default 10)
         - in: query
-          name: name
+          name: reviewer
           schema:
             type: string
-          description: Filter by deployment name
+          description: Filter by if the given user is a reviewer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - draft
+              - reviewing
+              - approved
+              - rejected
+              - deployed
+              - retired
+              - cancelled
+          description: Filter by deployment status.
       responses:
         "200":
           description: Successful response
@@ -1442,6 +1425,8 @@ paths:
       responses:
         "200":
           description: Successful response
+        "400":
+          $ref: "#/components/responses/400"
         "401":
           description: Unauthorized
         "404":
@@ -1474,6 +1459,48 @@ paths:
                   description: who is publishing the deployment
               required:
                 - user
+      responses:
+        "201":
+          description: Successful response
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Deployment not found
+        "500":
+          $ref: "#/components/responses/500"
+  /v1/admin/deployments/{id}/reject:
+    post:
+      summary: >-
+        Reject the Deployment. Only draft deployments can be rejected. And only
+        the reviewer can reject the deployment. After rejecting, the deployment
+        will be in `rejected` status.
+      operationId: adminRejectDeployment
+      tags:
+        - Admin
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Deployment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: The reason for rejecting the deployment
+                user:
+                  type: string
+                  description: The user who is rejecting the deployment
+              required:
+                - user
+                - reason
       responses:
         "201":
           description: Successful response
@@ -1531,6 +1558,58 @@ paths:
           description: Unauthorized
         "404":
           description: Config not found
+        "500":
+          $ref: "#/components/responses/500"
+  /v1/admin/setting:
+    get:
+      summary: Get system setting
+      operationId: adminGetSetting
+      tags:
+        - Admin
+      responses:
+        "200":
+          description: Current system setting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Setting"
+              required:
+                - data
+        "401":
+          description: Unauthorized
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      summary: Update system setting
+      operationId: adminUpdateSetting
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cluster_name:
+                  type: string
+                deployment_approve_required:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated system setting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Setting"
+              required:
+                - data
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Deployment not found
         "500":
           $ref: "#/components/responses/500"
 components:
@@ -1876,6 +1955,55 @@ components:
         - name
       example:
         name: agent-16888
+    Deployment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - reviewing
+            - approved
+            - rejected
+            - deployed
+            - retired
+            - cancelled
+        reviewers:
+          type: array
+          items:
+            type: string
+        notes:
+          type: object
+        config_suite_id:
+          type: integer
+          format: int64
+        created_at:
+          type: integer
+          format: int64
+        created_by:
+          type: string
+        approved_at:
+          type: integer
+          format: int64
+        approved_by:
+          type: string
+        finished_at:
+          type: integer
+          format: int64
+        finished_by:
+          type: string
+      required:
+        - id
+        - name
+        - status
+        - reviewers
+        - created_at
+        - created_by
     Config:
       type: object
       properties:
@@ -1910,53 +2038,6 @@ components:
         - content
         - created_at
         - created_by
-    Deployment:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        status:
-          type: string
-          enum:
-            - draft
-            - reviewing
-            - approved
-            - rejected
-            - deployed
-            - retired
-            - cancelled
-        reviewers:
-          type: array
-          items:
-            type: string
-        config_suite_id:
-          type: integer
-          format: int64
-        created_at:
-          type: integer
-          format: int64
-        created_by:
-          type: string
-        approved_at:
-          type: integer
-          format: int64
-        approved_by:
-          type: string
-        finished_at:
-          type: integer
-          format: int64
-        finished_by:
-          type: string
-      required:
-        - id
-        - name
-        - status
-        - reviewers
-        - created_at
-        - created_by
     DeploymentDetail:
       type: object
       properties:
@@ -1979,6 +2060,8 @@ components:
           type: array
           items:
             type: string
+        notes:
+          type: object
         created_at:
           type: integer
           format: int64
@@ -2005,6 +2088,16 @@ components:
         - reviewers
         - created_at
         - created_by
+    Setting:
+      type: object
+      properties:
+        deployment_approve_required:
+          type: boolean
+        cluster_name:
+          type: string
+      required:
+        - deployment_approve_required
+        - cluster_name
   responses:
     "400":
       description: Bad Request

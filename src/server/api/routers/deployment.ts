@@ -1,42 +1,30 @@
-import createClient from "openapi-fetch";
 import { z } from "zod";
 
-import { env } from "~/env";
-import { getApiToken } from "~/lib/apiToken";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { type paths } from "~/types/maos-core-scheme";
-
-const createApiClient = () => createClient<paths>({ baseUrl: env.MAOS_CORE_URL });
-
-const getAuthHeaders = async () => {
-  const apiToken = await getApiToken();
-  return {
-    accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiToken}`,
-  };
-};
-
-const handleApiError = (
-  operation: string,
-  error: { error: string } | undefined,
-  response: Response,
-) => {
-  console.error(`Failed to ${operation}`, error, response);
-  return { error: `Failed to ${operation}: ${error?.error}, ${response.statusText}`, data: null };
-};
+import { createApiClient, getAuthHeaders, handleApiError } from "./common";
 
 export const deploymentRouter = createTRPCRouter({
-  list: protectedProcedure.input(z.object({})).query(async ({}) => {
-    const client = createApiClient();
-    const headers = await getAuthHeaders();
-    const { data, error, response } = await client.GET("/v1/admin/deployments", {
-      headers,
-      params: { query: { page: 1, page_size: 50 } },
-    });
-    if (error) return handleApiError("list deployments", error, response);
-    return { data: data.data };
-  }),
+  list: protectedProcedure
+    .input(
+      z.object({
+        status: z
+          .enum(["draft", "reviewing", "approved", "rejected", "deployed", "retired", "cancelled"])
+          .optional(),
+        reviewer: z.string().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const client = createApiClient();
+      const headers = await getAuthHeaders();
+      const { data, error, response } = await client.GET("/v1/admin/deployments", {
+        headers,
+        params: {
+          query: { page: 1, page_size: 1000, status: input.status, reviewer: input.reviewer },
+        },
+      });
+      if (error) return handleApiError("list deployments", error, response);
+      return { data: data.data };
+    }),
 
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     const client = createApiClient();
@@ -70,31 +58,35 @@ export const deploymentRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
-    .input(z.object({ id: z.number(), name: z.string() }))
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        reviewers: z.array(z.string()).optional(),
+      }),
+    )
     .mutation(async ({ input }) => {
       const client = createApiClient();
       const headers = await getAuthHeaders();
       const { data, error, response } = await client.PATCH("/v1/admin/deployments/{id}", {
         headers,
         params: { path: { id: input.id } },
-        body: { name: input.name },
+        body: { name: input.name, reviewers: input.reviewers },
       });
       if (error) return handleApiError("update deployment", error, response);
       return { data: data.data };
     }),
 
-  remove: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ input, ctx }) => {
-      const client = createApiClient();
-      const headers = await getAuthHeaders();
-      const { error, response } = await client.DELETE("/v1/admin/deployments/{id}", {
-        headers,
-        params: { path: { id: input.id } },
-      });
-      if (error) return handleApiError("remove deployment", error, response);
-      return true;
-    }),
+  remove: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    const client = createApiClient();
+    const headers = await getAuthHeaders();
+    const { error, response } = await client.DELETE("/v1/admin/deployments/{id}", {
+      headers,
+      params: { path: { id: input.id } },
+    });
+    if (error) return handleApiError("remove deployment", error, response);
+    return { data: { result: "ok" } };
+  }),
 
   updateConfig: protectedProcedure
     .input(
@@ -121,6 +113,17 @@ export const deploymentRouter = createTRPCRouter({
       return { data: data.data };
     }),
 
+  submit: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    const client = createApiClient();
+    const headers = await getAuthHeaders();
+    const { error, response } = await client.POST("/v1/admin/deployments/{id}/submit", {
+      headers,
+      params: { path: { id: input.id } },
+    });
+    if (error) return handleApiError("submit deployment", error, response);
+    return { data: { result: "ok" } };
+  }),
+
   publish: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
@@ -130,6 +133,20 @@ export const deploymentRouter = createTRPCRouter({
         headers,
         params: { path: { id: input.id } },
         body: { user: ctx.session.user.email! },
+      });
+      if (error) return handleApiError("publish deployment", error, response);
+      return { data: { result: "ok" } };
+    }),
+
+  reject: protectedProcedure
+    .input(z.object({ id: z.number(), reason: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const client = createApiClient();
+      const headers = await getAuthHeaders();
+      const { error, response } = await client.POST("/v1/admin/deployments/{id}/reject", {
+        headers,
+        params: { path: { id: input.id } },
+        body: { user: ctx.session.user.email!, reason: input.reason },
       });
       if (error) return handleApiError("publish deployment", error, response);
       return { data: { result: "ok" } };
