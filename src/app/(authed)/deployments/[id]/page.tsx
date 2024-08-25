@@ -10,7 +10,12 @@ import { getServerAuthSession } from "~/server/auth";
 import { api } from "~/trpc/server";
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const [session, settings] = await Promise.all([getServerAuthSession(), api.settings.get()]);
+  const [session, settings, allSuites] = await Promise.all([
+    getServerAuthSession(),
+    api.settings.get(),
+    api.referenceConfigs.suites(),
+  ]);
+
   const approveRequired = settings.data?.deployment_approve_required ?? false;
   const deploymentId = Result.fromThrowable(
     () => parseInt(params.id),
@@ -45,6 +50,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             <DeploymentEditor
               deploymentId={dep.id}
               session={session!}
+              allSuites={allSuites.data ?? []}
               approveRequired={approveRequired}
             />
           ),

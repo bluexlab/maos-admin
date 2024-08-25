@@ -7,10 +7,12 @@ export const deploymentRouter = createTRPCRouter({
   list: protectedProcedure
     .input(
       z.object({
+        name: z.string().optional(),
         status: z
           .enum(["draft", "reviewing", "approved", "rejected", "deployed", "retired", "cancelled"])
           .optional(),
         reviewer: z.string().optional(),
+        id: z.array(z.number()).optional(),
       }),
     )
     .query(async ({ input }) => {
@@ -19,7 +21,14 @@ export const deploymentRouter = createTRPCRouter({
       const { data, error, response } = await client.GET("/v1/admin/deployments", {
         headers,
         params: {
-          query: { page: 1, page_size: 1000, status: input.status, reviewer: input.reviewer },
+          query: {
+            page: 1,
+            page_size: 1000,
+            status: input.status,
+            reviewer: input.reviewer,
+            name: input.name,
+            id: input.id,
+          },
         },
       });
       if (error) return handleApiError("list deployments", error, response);

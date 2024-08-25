@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { type SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
+
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+
+type ReferenceType = {
+  suite_name: string;
+  configs: Record<string, string>;
+};
 
 type ConfigEditorProps = {
   deploymentId: bigint;
@@ -14,6 +22,7 @@ type ConfigEditorProps = {
     minAgentVersion?: string;
     content: Record<string, string>;
   };
+  references: ReferenceType[];
   onSave: () => void;
 };
 
@@ -26,17 +35,27 @@ type FormValues = {
   entries: ConfigEntry[];
 };
 
-export function ConfigEditor({ config, deploymentId, onSave }: ConfigEditorProps) {
+export function ConfigEditor({ config, deploymentId, references, onSave }: ConfigEditorProps) {
   const [minAgentVersion, setMinAgentVersion] = useState<string>("");
+  const allKeys = useMemo(() => {
+    const keySet = new Set(Object.keys(config.content));
+    references.forEach((reference) => {
+      Object.keys(reference.configs).forEach((key) => keySet.add(key));
+    });
+    return Array.from(keySet).sort();
+  }, [references, config.content]);
+  const referenceNames = references.map((reference) => reference.suite_name);
+
   const {
     register,
     control,
     handleSubmit,
     formState: { errors },
     getValues,
+    watch,
   } = useForm<FormValues>({
     defaultValues: {
-      entries: Object.entries(config.content).map(([key, value]) => ({ key, value })),
+      entries: allKeys.map((key) => ({ key, value: config.content[key] })),
     },
   });
 
@@ -90,47 +109,68 @@ export function ConfigEditor({ config, deploymentId, onSave }: ConfigEditorProps
       <div className="my-4">
         <hr className="border-t border-gray-300" />
       </div> */}
-      <div className="grid gap-4 bg-slate-800 p-4">
-        <div className="grid grid-cols-11 items-center gap-4">
-          <div className="col-span-2 flex items-center justify-center">Config Key</div>
-          <div className="col-span-2 flex items-center justify-center">Value</div>
-          <div className="col-span-2 flex items-center justify-center">QA</div>
-          <div className="col-span-2 flex items-center justify-center">Staging</div>
-          <div className="col-span-2 flex items-center justify-center">Production</div>
-          <div className="col-span-1 flex items-center justify-center"></div>
-        </div>
-        {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-11 items-center gap-4">
-            <Input
-              className="col-span-2"
-              {...register(`entries.${index}.key`, {
-                required: "Key is required",
-                validate: (value) => validateUniqueKey(value, index),
-              })}
-              placeholder="Key"
-            />
-            <Input
-              className="col-span-2"
-              {...register(`entries.${index}.value`, { required: "Value is required" })}
-              placeholder="Value"
-            />
-            <Input className="col-span-2" disabled value={""} />
-            <Input className="col-span-2" disabled value={""} />
-            <Input className="col-span-2" disabled value={""} />
-
-            <Button type="button" onClick={() => remove(index)} className="col-span-1">
-              Remove
-            </Button>
-            {errors.entries?.[index]?.key && (
-              <span className="col-span-4 text-red-500">{errors.entries[index]?.key?.message}</span>
-            )}
-            {errors.entries?.[index]?.value && (
-              <span className="col-span-4 text-red-500">
-                {errors.entries[index]?.value?.message}
-              </span>
-            )}
-          </div>
-        ))}
+      <div className="w-full bg-slate-800 p-4">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="p-1">Config Key</th>
+              <th className="p-1">Value</th>
+              {referenceNames.map((key) => (
+                <th key={key} className="p-1">
+                  {key}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((field, index) => (
+              <tr key={field.id}>
+                <td className="p-1">
+                  <Input
+                    className="col-span-2"
+                    {...register(`entries.${index}.key`, {
+                      required: "Key is required",
+                      validate: (value) => validateUniqueKey(value, index),
+                    })}
+                    placeholder="Key"
+                  />
+                  {errors.entries?.[index]?.key && (
+                    <span className="col-span-4 text-red-500">
+                      {errors.entries[index]?.key?.message}
+                    </span>
+                  )}
+                </td>
+                <td className="p-1">
+                  <Input className="col-span-2" {...register(`entries.${index}.value`)} />
+                  {errors.entries?.[index]?.value && (
+                    <span className="col-span-4 text-red-500">
+                      {errors.entries[index]?.value?.message}
+                    </span>
+                  )}
+                </td>
+                {references.map((reference) => (
+                  <td key={reference.suite_name} className="p-1">
+                    <Input
+                      className={cn(
+                        "disabled:opacity-100",
+                        reference.configs[field.key] === watch(`entries.${index}.value`)
+                          ? "bg-green-800"
+                          : "bg-red-800",
+                      )}
+                      disabled
+                      value={reference.configs[field.key]}
+                    />
+                  </td>
+                ))}
+                <td className="w-6 p-1">
+                  <Button type="button" onClick={() => remove(index)} className="col-span-1">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="mx-4 mt-1 flex">

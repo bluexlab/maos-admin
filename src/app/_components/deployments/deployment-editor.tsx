@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import { type Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,34 +26,46 @@ import { api } from "~/trpc/react";
 import { PublishDeploymentAlert, RemoveDeploymentAlert, SubmitDeploymentAlert } from "./alerts";
 import { ConfigEditor } from "./config-editor";
 import { ConfigViewer } from "./config-viewer";
-
-// type DeploymentType = components["schemas"]["DeploymentDetail"];
+import ConfigSuitesSelectDialog from "./config-suites-select-dialog";
 
 export default function DeploymentEditor({
   deploymentId,
   session,
   approveRequired,
+  allSuites,
 }: {
   deploymentId: number;
   session: Session;
   approveRequired: boolean;
+  allSuites: string[];
 }) {
   const router = useRouter();
-  const { data, refetch, isLoading } = api.deployments.get.useQuery({ id: deploymentId });
-  const { data: users } = api.users.list.useQuery({});
-  const deployment = data?.data;
-  const agents = deployment?.configs?.sort((a, b) => a.agent_name.localeCompare(b.agent_name));
   const [reviewers, setReviewers] = useState<string[]>([]);
+  const [selectedSuites, setSelectedSuites] = useState<string[]>(allSuites);
   const [openSubmitDeploymentAlert, setOpenSubmitDeploymentAlert] = useState(false);
   const [openPublishDeploymentAlert, setOpenPublishDeploymentAlert] = useState(false);
   const [openRemoveDeploymentAlert, setOpenRemoveDeploymentAlert] = useState(false);
+  const [openConfigSuitesSelectDialog, setOpenConfigSuitesSelectDialog] = useState(false);
+  const [addedDeploymentIds, setAddedDeploymentIds] = useState<number[]>([]);
+
+  const { data, refetch, isLoading } = api.deployments.get.useQuery({ id: deploymentId });
+  const { data: users } = api.users.list.useQuery({});
+  const { data: referenceConfigs } = api.referenceConfigs.list.useQuery({
+    referenceConfigs: selectedSuites,
+    deployments: addedDeploymentIds,
+  });
+
+  const editingDeployment = data?.data;
+  const agents = editingDeployment?.configs?.sort((a, b) =>
+    a.agent_name.localeCompare(b.agent_name),
+  );
 
   // Set reviewers from deployment
   useEffect(() => {
-    if (deployment?.reviewers) {
-      setReviewers(deployment.reviewers);
+    if (editingDeployment?.reviewers) {
+      setReviewers(editingDeployment.reviewers);
     }
-  }, [deployment]);
+  }, [editingDeployment]);
 
   const availableReviewers =
     users?.data.filter(
@@ -114,31 +126,31 @@ export default function DeploymentEditor({
   const addReviewer = (reviewer: string) => {
     const updatedReviewers = [...reviewers, reviewer];
     setReviewers(updatedReviewers);
-    updateMutation.mutate({ id: deployment!.id, reviewers: updatedReviewers });
+    updateMutation.mutate({ id: editingDeployment!.id, reviewers: updatedReviewers });
   };
 
   const removeReviewer = (reviewer: string) => {
     const updatedReviewers = reviewers.filter((r) => r !== reviewer);
     setReviewers(updatedReviewers);
-    updateMutation.mutate({ id: deployment!.id, reviewers: updatedReviewers });
+    updateMutation.mutate({ id: editingDeployment!.id, reviewers: updatedReviewers });
   };
 
   const removeDeployment = () => {
     setOpenRemoveDeploymentAlert(false);
-    removeDeploymentMutation.mutate({ id: deployment!.id });
+    removeDeploymentMutation.mutate({ id: editingDeployment!.id });
   };
 
   const submitDeployment = () => {
     setOpenSubmitDeploymentAlert(false);
-    submitMutation.mutate({ id: deployment!.id });
+    submitMutation.mutate({ id: editingDeployment!.id });
   };
 
   const publishDeployment = () => {
     setOpenPublishDeploymentAlert(false);
-    publishMutation.mutate({ id: deployment!.id });
+    publishMutation.mutate({ id: editingDeployment!.id });
   };
 
-  const editable = ["draft"].includes(deployment?.status ?? "unknown");
+  const editable = ["draft"].includes(editingDeployment?.status ?? "unknown");
 
   return (
     <div className="flex flex-col gap-4">
@@ -185,7 +197,12 @@ export default function DeploymentEditor({
 
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Agents Config</CardTitle>
+          <div className="flex justify-between">
+            <CardTitle>Agents Config</CardTitle>
+            <Button variant="outline" onClick={() => setOpenConfigSuitesSelectDialog(true)}>
+              <Settings />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -195,17 +212,21 @@ export default function DeploymentEditor({
               {agents?.map((agent) => (
                 <AccordionItem key={agent.agent_id} value={`item-${agent.agent_id}`}>
                   <AccordionTrigger className="px-4 data-[state=open]:bg-slate-800">
-                    Agent {agent.agent_name}
+                    {agent.agent_name}
                   </AccordionTrigger>
                   <AccordionContent>
                     {editable ? (
                       <ConfigEditor
                         config={agent}
-                        deploymentId={BigInt(deployment!.id)}
+                        deploymentId={BigInt(editingDeployment!.id)}
                         onSave={refetch}
+                        references={referenceConfigs?.data?.[agent.agent_name]?.config_suites ?? []}
                       />
                     ) : (
-                      <ConfigViewer config={agent} />
+                      <ConfigViewer
+                        config={agent}
+                        references={referenceConfigs?.data?.[agent.agent_name]?.config_suites ?? []}
+                      />
                     )}
                   </AccordionContent>
                 </AccordionItem>
@@ -232,21 +253,32 @@ export default function DeploymentEditor({
         open={openRemoveDeploymentAlert}
         onOpenChange={setOpenRemoveDeploymentAlert}
         onSuccess={removeDeployment}
-        deploymentName={deployment?.name ?? "Unknown"}
+        deploymentName={editingDeployment?.name ?? "Unknown"}
       />
 
       <SubmitDeploymentAlert
         open={openSubmitDeploymentAlert}
         onOpenChange={setOpenSubmitDeploymentAlert}
         onSuccess={submitDeployment}
-        deploymentName={deployment?.name ?? "Unknown"}
+        deploymentName={editingDeployment?.name ?? "Unknown"}
       />
 
       <PublishDeploymentAlert
         open={openPublishDeploymentAlert}
         onOpenChange={setOpenPublishDeploymentAlert}
         onSuccess={publishDeployment}
-        deploymentName={deployment?.name ?? "Unknown"}
+        deploymentName={editingDeployment?.name ?? "Unknown"}
+      />
+
+      <ConfigSuitesSelectDialog
+        availableSuites={allSuites}
+        selectedSuites={selectedSuites}
+        open={openConfigSuitesSelectDialog}
+        onSelected={(selected, deployments) => {
+          setSelectedSuites(selected);
+          setAddedDeploymentIds(deployments);
+        }}
+        onOpenChange={setOpenConfigSuitesSelectDialog}
       />
     </div>
   );

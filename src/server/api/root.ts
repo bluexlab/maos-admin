@@ -3,6 +3,7 @@ import { agentRouter } from "./routers/agent";
 import { deploymentRouter } from "./routers/deployment";
 import { settingRouter } from "./routers/setting";
 import { userRouter } from "./routers/user";
+import { referenceConfigsRouter } from "./routers/reference_configs";
 
 /**
  * This is the primary router for your server.
@@ -12,6 +13,7 @@ import { userRouter } from "./routers/user";
 export const appRouter = createTRPCRouter({
   agents: agentRouter,
   deployments: deploymentRouter,
+  referenceConfigs: referenceConfigsRouter,
   users: userRouter,
   settings: settingRouter,
 });

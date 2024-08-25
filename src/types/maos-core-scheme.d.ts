@@ -546,6 +546,23 @@ export interface paths {
         patch: operations["adminUpdateSetting"];
         trace?: never;
     };
+    "/v1/admin/reference_config_suites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List reference config suites */
+        get: operations["adminListReferenceConfigSuites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -777,6 +794,15 @@ export interface components {
         Setting: {
             deployment_approve_required: boolean;
             cluster_name: string;
+        };
+        ReferenceConfigSuite: {
+            agent_name: string;
+            config_suites: {
+                suite_name: string;
+                configs: {
+                    [key: string]: string;
+                };
+            }[];
         };
     };
     responses: {
@@ -1815,6 +1841,10 @@ export interface operations {
                 reviewer?: string;
                 /** @description Filter by deployment status. */
                 status?: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "retired" | "cancelled";
+                /** @description Filter by deployment name */
+                name?: string;
+                /** @description Filter by list of deployment id */
+                id?: number[];
             };
             header?: never;
             path?: never;
@@ -2255,6 +2285,36 @@ export interface operations {
             };
             /** @description Deployment not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminListReferenceConfigSuites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReferenceConfigSuite"][];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
