@@ -1,0 +1,154 @@
+default:
+  interruptible: true
+  retry:
+    max: 2
+    when: runner_system_failure
+
+variables:
+  GIT_DEPTH: 5
+  GITHUB_TOKEN: $GITHUB_TOKEN
+  DOCKER_DRIVER: overlay2
+  REPOSITORY_NAME: maos-admin-portal
+  MASTER_REPO_NAMESPACE: "navyx/ai/maos"
+
+stages:
+  - init
+  - package
+  - test
+
+include:
+  # - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  # - project: 'navyx/shared/ci-templates'
+  #   ref: 'master'
+  #   file: 'sanity/changed-lines.yml'
+
+.default_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+
+.after_merge_rules:
+  rules:
+    - if: "$RUN_DEPSCAN"
+      when: never
+    - if: "$RUN_COVERAGE"
+      when: never
+    - if: "$CI_PROJECT_NAMESPACE == $MASTER_REPO_NAMESPACE && $CI_COMMIT_BRANCH =~ /dev|master|main|hotfix/"
+
+.testing_template:
+  stage: test
+  image:
+    name: node:18-slim
+    entrypoint: [""]
+  variables:
+    DATABASE_URL: postgres://postgres:root@postgres:5432/maos-admin-portal-test?sslmode=disable
+    NEXTAUTH_URL: "http://localhost:3000"
+    NEXTAUTH_SECRET: "--secret--"
+    GOOGLE_CLIENT_ID: "--google-client-id--"
+    GOOGLE_CLIENT_SECRET: "--google-client-secret--"
+    MAOS_CORE_URL: "http://localhost:5001"
+  before_script:
+    - ln -fs /usr/share/zoneinfo/Asia/Taipei /etc/localtime
+    - npm install -g pnpm && pnpm install --frozen-lockfile
+
+# nodejs-scan-sast:
+#   rules:
+#     - !reference [ .default_rules, rules ]
+
+eslint:
+  extends: .testing_template
+  stage: test
+  script:
+    - pnpm run lint
+  rules:
+    - !reference [.default_rules, rules]
+
+unittest:
+  extends: .testing_template
+  stage: test
+  services:
+    - name: $AWS_ECR_REGISTRY/postgres:latest
+      alias: postgres
+  variables:
+    DB_HOST: postgres
+    POSTGRES_DB: maos-admin-portal-test
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: root
+  script:
+    - apt-get update && apt-get install -y libssl-dev poppler-data poppler-utils
+    - pnpm run migrate
+    - pnpm run test:unit
+  rules:
+    - !reference [.default_rules, rules]
+
+try_build:
+  stage: test
+  image:
+    name: $AWS_ECR_REGISTRY/aws-cli-docker
+    entrypoint: [""]
+  script:
+    - docker build .
+  rules:
+    - !reference [.default_rules, rules]
+
+build_image:
+  stage: package
+  image:
+    name: $AWS_ECR_REGISTRY/aws-cli-docker
+    entrypoint: [""]
+  artifacts:
+    reports:
+      dotenv: build.env
+  script:
+    - git fetch --all --tags > /dev/null
+    - LAST_BUILD=$(git tag -l | grep ^build/ | grep -o -E '[0-9]+$' | sort -n | tail -n1; exit 0)
+    - >
+      if [ "$CI_COMMIT_BRANCH" = "main" -o "$CI_COMMIT_BRANCH" = "master" ];
+      then BUILD_PREFIX="prod"; CDN_BUCKET='bluex-static-files';
+      else BUILD_PREFIX=$CI_COMMIT_BRANCH; CDN_BUCKET='bluex-static-files-dev';
+      fi
+    - NEXT_BUILD="$BUILD_PREFIX-$((LAST_BUILD + 1))"
+    - NEW_TAG="build/$NEXT_BUILD"
+
+    # Tag build number
+    - echo "Last Build is $LAST_BUILD, New Tag is $NEW_TAG"
+    - >
+      curl --request POST --header "PRIVATE-TOKEN: $GITLAB_GROUP_ACCESS_TOKEN"
+      --silent --output /dev/null --show-error --fail
+      "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/repository/tags?tag_name=$NEW_TAG&ref=$CI_COMMIT_SHA"
+
+    ## build docker image and push to ECR
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+    - >
+      if [ "$BUILD_PREFIX" = "prod" ];
+      then BUILD_AWS_ACCESS_KEY_ID=$PROD_AWS_ACCESS_KEY_ID; BUILD_AWS_SECRET_ACCESS_KEY=$PROD_AWS_SECRET_ACCESS_KEY;
+      else BUILD_AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID; BUILD_AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY;
+      fi
+    - >
+      docker build --build-arg BUILDNO=$NEXT_BUILD --build-arg CDN_BUCKET=$CDN_BUCKET --build-arg REV=$(git log -n 1 --pretty=format:'%h')
+      --build-arg AWS_ACCESS_KEY_ID=$BUILD_AWS_ACCESS_KEY_ID --build-arg AWS_SECRET_ACCESS_KEY=$BUILD_AWS_SECRET_ACCESS_KEY
+      --build-arg AWS_ECR_REGISTRY=$AWS_ECR_REGISTRY --build-arg PACKAGE_SIG=$PACKAGE_SIG
+      -t $AWS_ECR_REGISTRY/$REPOSITORY_NAME:$NEXT_BUILD .
+    - docker push $AWS_ECR_REGISTRY/$REPOSITORY_NAME:$NEXT_BUILD
+    - if [ "$CI_COMMIT_BRANCH" == "dev" ]; then docker tag $AWS_ECR_REGISTRY/$REPOSITORY_NAME:$NEXT_BUILD $AWS_ECR_REGISTRY/$REPOSITORY_NAME:latest; docker push $AWS_ECR_REGISTRY/$REPOSITORY_NAME:latest; fi
+
+    ## send build tracking
+    - LAST_TAG=$(git tag -l | grep -E "\-$LAST_BUILD$")
+    - echo "Get logs between $LAST_TAG and $NEW_TAG"
+    - if [ -z "$LAST_TAG" ]; then LOG_RANGE="HEAD"; else LOG_RANGE="$LAST_TAG..HEAD"; fi
+    - INFO=$(git log "$LOG_RANGE" --pretty=format:"[%ad %an %h] %s" --date=iso)
+    - ENCODED_INFO=$(printf "%s\n" "$INFO" | jq -sRr @uri)
+    - echo $ENCODED_INFO
+    - >
+      curl -X POST -H "Content-Type: application/x-www-form-urlencoded"
+      --silent --output /dev/null --show-error --fail
+      "https://buildtracking.bluex.trade/component"
+      -d "component_name=$REPOSITORY_NAME&build_number=$NEXT_BUILD&build_info=$ENCODED_INFO"
+
+    ## store build info
+    - echo "BUILDNO=$NEXT_BUILD" > build.env
+    - echo "NEW_TAG=$NEW_TAG" >> build.env
+    - echo "BUILD_PREFIX=$BUILD_PREFIX" >> build.env
+  rules:
+    - !reference [.after_merge_rules, rules]

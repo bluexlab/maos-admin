@@ -7,7 +7,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const userRouter = createTRPCRouter({
   listPaginated: protectedProcedure
-    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional().default(10) }))
+    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional().default(50) }))
     .query(async ({ ctx, input }) => {
       const pageNum = input.page ?? 1;
       const offset = (pageNum - 1) * input.pageSize;
@@ -19,12 +19,13 @@ export const userRouter = createTRPCRouter({
       return { data, total: total?.total ?? 0 };
     }),
 
-  list: protectedProcedure
-    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional().default(10) }))
-    .query(async ({ ctx }) => {
-      const data = await ctx.db.select().from(users).orderBy(users.email);
-      return { data };
-    }),
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const [data, total] = await Promise.all([
+      ctx.db.select().from(users).orderBy(users.email),
+      ctx.db.select({ total: count() }).from(users),
+    ]);
+    return { data, total: total[0]?.total ?? 0 };
+  }),
 
   invite: protectedProcedure
     .input(z.object({ email: z.string().email() }))

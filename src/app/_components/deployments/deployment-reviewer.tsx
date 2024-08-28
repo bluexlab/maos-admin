@@ -81,7 +81,7 @@ export default function DeploymentReviewer({ deploymentId }: { deploymentId: num
                     Agent {agent.agent_name}
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ConfigViewer config={agent} />
+                    <ConfigViewer config={agent} references={[]} />
                   </AccordionContent>
                 </AccordionItem>
               ))}

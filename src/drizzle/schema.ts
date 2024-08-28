@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { relations, sql } from "drizzle-orm";
 import { index, integer, pgTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";

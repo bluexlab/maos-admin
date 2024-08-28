@@ -7,9 +7,9 @@ export default async function Page({ searchParams }: { searchParams: { page: str
   const session = await getServerAuthSession();
 
   const page = parseInt(searchParams.page) || 1;
-  const perPage = 10;
-  const { data: users, total } = await api.users.list({ page });
-  const totalPages = Math.ceil(total / perPage);
+  const pageSize = 20;
+  const { data: users, total } = await api.users.listPaginated({ page, pageSize });
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <AppFrame session={session}>
@@ -20,7 +20,7 @@ export default async function Page({ searchParams }: { searchParams: { page: str
         session={session!}
         users={users}
         currentPage={page}
-        perPage={perPage}
+        pageSize={pageSize}
         totalPages={totalPages}
       />
     </AppFrame>

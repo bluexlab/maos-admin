@@ -15,7 +15,6 @@ export default async function Page() {
       {settings.data ? (
         <SettingList
           settings={{
-            clusterName: settings.data.cluster_name,
             deploymentApproveRequired: settings.data.deployment_approve_required,
           }}
         />

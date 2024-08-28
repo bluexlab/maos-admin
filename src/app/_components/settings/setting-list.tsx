@@ -1,6 +1,5 @@
 "use client";
 
-import { type Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,13 +11,11 @@ import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 
 type SettingsType = {
-  clusterName?: string | undefined;
   deploymentApproveRequired?: boolean | undefined;
 };
 
 const SettingList = ({ settings }: { settings: SettingsType }) => {
   const [apiToken, setApiToken] = useState("");
-  const [clusterName, setClusterName] = useState(settings.clusterName);
   const [deploymentApproveRequired, setDeploymentApproveRequired] = useState(
     settings.deploymentApproveRequired,
   );
@@ -38,7 +35,6 @@ const SettingList = ({ settings }: { settings: SettingsType }) => {
     e.preventDefault();
     mutation.mutate({
       apiToken,
-      clusterName: clusterName,
       deploymentApproveRequired,
     });
   };
@@ -54,17 +50,6 @@ const SettingList = ({ settings }: { settings: SettingsType }) => {
               onClick={() => setDeploymentApproveRequired(!deploymentApproveRequired)}
             />
             <Label htmlFor="approveDeployment">Deployment require approval</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label className="w-40" htmlFor="apiToken">
-              Cluster Name
-            </Label>
-            <Input
-              id="apiToken"
-              value={clusterName ?? ""}
-              onChange={(e) => setClusterName(e.target.value)}
-              placeholder="Enter your cluster name"
-            />
           </div>
           <div className="flex items-center gap-2">
             <Label className="w-40" htmlFor="apiToken">

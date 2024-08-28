@@ -1,6 +1,5 @@
 "use client";
 
-import { type Session } from "next-auth";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";

@@ -46,6 +46,26 @@ export const deploymentRouter = createTRPCRouter({
     return { data };
   }),
 
+  validName: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      if (!input.name) return { data: false };
+
+      const client = createApiClient();
+      const headers = await getAuthHeaders();
+      const { data, error, response } = await client.GET("/v1/admin/deployments", {
+        headers,
+        params: { query: { name: input.name } },
+      });
+      if (error) return handleApiError("valid name", error, response);
+      const notExists = !data.data.find((d) => d.name === input.name);
+      return { data: notExists };
+    }),
+
   create: protectedProcedure
     .input(
       z.object({

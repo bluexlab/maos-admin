@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "~/drizzle";
 import { settings } from "~/drizzle/schema";

@@ -49,7 +49,7 @@ export default function DeploymentEditor({
   const [addedDeploymentIds, setAddedDeploymentIds] = useState<number[]>([]);
 
   const { data, refetch, isLoading } = api.deployments.get.useQuery({ id: deploymentId });
-  const { data: users } = api.users.list.useQuery({});
+  const { data: users } = api.users.list.useQuery();
   const { data: referenceConfigs } = api.referenceConfigs.list.useQuery({
     referenceConfigs: selectedSuites,
     deployments: addedDeploymentIds,

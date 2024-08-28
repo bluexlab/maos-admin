@@ -24,11 +24,16 @@ export function AddDeploymentDialog({
   const [name, setName] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
+  const { data: validName } = api.deployments.validName.useQuery({ name });
   const mutation = api.deployments.create.useMutation({
-    onSuccess: () => {
-      onOpenChange(false);
-      router.refresh();
-      toast.success("Deployment added successfully");
+    onSuccess: (data) => {
+      if (!data.data) {
+        setErrorMessage("Failed to add deployment: " + data.error);
+      } else {
+        onOpenChange(false);
+        router.refresh();
+        toast.success("Deployment added successfully");
+      }
     },
     onError: (error) => {
       setErrorMessage("Failed to add deployment: " + error.message);
@@ -54,12 +59,15 @@ export function AddDeploymentDialog({
               onChange={(e) => setName(e.target.value)}
             />
           </div>
-          {errorMessage && <div className="text-red-500">{errorMessage}</div>}
+          {errorMessage && <div className="flex justify-end text-red-500">{errorMessage}</div>}
+          {validName?.data === false && (
+            <div className="flex justify-end text-red-500">Deployment name already exists</div>
+          )}
         </div>
         <DialogFooter>
           <Button
             type="submit"
-            disabled={!name}
+            disabled={!name || !validName?.data}
             loading={loading}
             className="w-40"
             onClick={() => {

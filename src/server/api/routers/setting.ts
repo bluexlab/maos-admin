@@ -20,7 +20,6 @@ export const settingRouter = createTRPCRouter({
     .input(
       z.object({
         apiToken: z.string().optional(),
-        clusterName: z.string().optional(),
         deploymentApproveRequired: z.boolean().optional(),
       }),
     )
@@ -35,13 +34,12 @@ export const settingRouter = createTRPCRouter({
             set: { value: encrypted, updatedAt: sql`NOW()` },
           });
       }
-      if (input.clusterName !== undefined || input.deploymentApproveRequired !== undefined) {
+      if (input.deploymentApproveRequired !== undefined) {
         const client = createApiClient();
         const headers = await getAuthHeaders();
         const { error, response } = await client.PATCH("/v1/admin/setting", {
           headers,
           body: {
-            cluster_name: input.clusterName === "" ? undefined : input.clusterName,
             deployment_approve_required: input.deploymentApproveRequired,
           },
         });

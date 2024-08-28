@@ -35,7 +35,7 @@ function UserDropdown({ session }: { session: Session | null }) {
   );
 }
 
-import { Bot, Home, Menu, Package, Settings, Truck, Users } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 
 import { headers } from "next/headers";

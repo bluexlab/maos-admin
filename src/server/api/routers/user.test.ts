@@ -42,7 +42,7 @@ describe.concurrent("userRouter API", () => {
           .insert(users)
           .values([{ email: "user2@example.com" }, { email: "user3@example.com" }]);
 
-        const result = await caller.users.list({ page: 1, pageSize: 2 });
+        const result = await caller.users.listPaginated({ page: 1, pageSize: 2 });
         expect(result.total).toEqual(3);
         expect(result.data).toHaveLength(2);
       });

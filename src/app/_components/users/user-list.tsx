@@ -28,13 +28,12 @@ const UserList = ({
   session,
   users,
   currentPage,
-  perPage,
   totalPages,
 }: {
   session: Session;
   users: User[];
   currentPage: number;
-  perPage: number;
+  pageSize: number;
   totalPages: number;
 }) => {
   const router = useRouter();
