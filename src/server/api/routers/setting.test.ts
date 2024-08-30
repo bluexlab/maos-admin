@@ -31,7 +31,7 @@ describe.concurrent("settingRouter API", () => {
 
       const mockSettings = {
         deployment_approve_required: true,
-        cluster_name: "dev",
+        display_name: "dev",
       };
 
       // Mock fetch directly

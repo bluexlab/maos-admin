@@ -793,7 +793,7 @@ export interface components {
         };
         Setting: {
             deployment_approve_required: boolean;
-            cluster_name: string;
+            display_name: string;
         };
         ReferenceConfigSuite: {
             agent_name: string;
@@ -858,7 +858,10 @@ export interface operations {
     getCallerConfig: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Specifies the version of the agent in the format x.y.z where x, y, and z are non-negative integers. */
+                "X-Agent-Version"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -870,9 +873,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Configuration"];
+                    "application/json": {
+                        data: components["schemas"]["Configuration"];
+                    };
                 };
             };
+            400: components["responses"]["400"];
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -880,6 +886,14 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Config not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
         };
     };
     createInvocationAsync: {
@@ -2205,6 +2219,7 @@ export interface operations {
                     };
                 };
             };
+            400: components["responses"]["400"];
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -2260,7 +2275,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    cluster_name?: string;
+                    display_name?: string;
                     deployment_approve_required?: boolean;
                 };
             };

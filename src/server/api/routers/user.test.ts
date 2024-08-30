@@ -28,7 +28,7 @@ describe.concurrent("userRouter API", () => {
         const { session } = await useSession(db);
         const { caller } = useCaller({ db, session });
 
-        const users = await caller.users.list({});
+        const users = await caller.users.list();
         expect(users.total).toEqual(1);
         expect(users.data).toHaveLength(1);
       });
