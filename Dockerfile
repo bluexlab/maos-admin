@@ -1,10 +1,7 @@
-FROM node:20-slim as base
+FROM node:20-alpine as base
 WORKDIR /app
 
 FROM base as builder
-RUN apt-get update && \
-  apt-get install -y libssl-dev dumb-init && \
-  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY package.json pnpm*.yaml ./
@@ -25,11 +22,9 @@ RUN pnpm run build
 RUN npx tsup src/drizzle/migrate.ts
 
 # Build the production image
-FROM node:20-slim
+FROM base
 
-RUN apt-get update && \
-  apt-get install -y libssl-dev dumb-init poppler-data poppler-utils && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
@@ -57,4 +52,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["dumb-init", "./launch.sh"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["./launch.sh"]
