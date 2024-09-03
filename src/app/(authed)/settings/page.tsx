@@ -12,15 +12,11 @@ export default async function Page() {
       <div className="flex items-center">
         <h1 className="text-lg font-semibold md:text-2xl">Settings</h1>
       </div>
-      {settings.data ? (
-        <SettingList
-          settings={{
-            deploymentApproveRequired: settings.data.deployment_approve_required,
-          }}
-        />
-      ) : (
-        <div>{settings.error}</div>
-      )}
+      <SettingList
+        settings={{
+          deploymentApproveRequired: settings.data?.deployment_approve_required,
+        }}
+      />
     </AppFrame>
   );
 }
