@@ -6,6 +6,7 @@ import { api } from "~/trpc/server";
 export default async function Page() {
   const session = await getServerAuthSession();
   const settings = await api.settings.get();
+  const hasApiToken = await api.settings.hasApiToken();
 
   return (
     <AppFrame session={session}>
@@ -16,6 +17,7 @@ export default async function Page() {
         settings={{
           deploymentApproveRequired: settings.data?.deployment_approve_required,
         }}
+        hasApiToken={hasApiToken.data}
       />
     </AppFrame>
   );

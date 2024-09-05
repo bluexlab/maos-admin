@@ -6,12 +6,12 @@ import { type paths } from "~/types/maos-core-scheme";
 
 export const createApiClient = () => createClient<paths>({ baseUrl: env.MAOS_CORE_URL });
 
-export const getAuthHeaders = async () => {
-  const apiToken = await getApiToken();
+export const getAuthHeaders = async (apiToken?: string) => {
+  const token = apiToken ?? (await getApiToken());
   return {
     accept: "application/json",
     "Content-Type": "application/json",
-    Authorization: `Bearer ${apiToken}`,
+    Authorization: `Bearer ${token}`,
   };
 };
 

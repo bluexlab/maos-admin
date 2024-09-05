@@ -14,7 +14,13 @@ type SettingsType = {
   deploymentApproveRequired?: boolean | undefined;
 };
 
-const SettingList = ({ settings }: { settings: SettingsType }) => {
+const SettingList = ({
+  settings,
+  hasApiToken,
+}: {
+  settings: SettingsType;
+  hasApiToken: boolean;
+}) => {
   const [apiToken, setApiToken] = useState("");
   const [deploymentApproveRequired, setDeploymentApproveRequired] = useState(
     settings.deploymentApproveRequired,
@@ -22,12 +28,30 @@ const SettingList = ({ settings }: { settings: SettingsType }) => {
 
   const router = useRouter();
   const mutation = api.settings.update.useMutation({
-    onSuccess: () => {
-      toast.success("Settings updated");
-      router.refresh();
+    onSuccess: (data) => {
+      if (data.data) {
+        toast.success("Settings updated");
+        router.refresh();
+      } else {
+        toast.error("Failed to update settings: " + data.error);
+      }
     },
     onError: () => {
       toast.error("Failed to update settings");
+    },
+  });
+
+  const mutateBootstrap = api.settings.bootstrap.useMutation({
+    onSuccess: (data) => {
+      if (data.data) {
+        toast.success("Bootstrap successful");
+        router.refresh();
+      } else {
+        toast.error("Failed to bootstrap: " + data.error);
+      }
+    },
+    onError: (e) => {
+      toast.error(`Failed to bootstrap: ${e.message}`);
     },
   });
 
@@ -37,6 +61,10 @@ const SettingList = ({ settings }: { settings: SettingsType }) => {
       apiToken,
       deploymentApproveRequired,
     });
+  };
+
+  const handleBootstrap = () => {
+    mutateBootstrap.mutate();
   };
 
   return (
@@ -63,9 +91,21 @@ const SettingList = ({ settings }: { settings: SettingsType }) => {
             />
           </div>
         </div>
-        <Button type="submit" className="w-40" loading={mutation.status === "pending"}>
-          Update
-        </Button>
+        <div className="flex items-center justify-start gap-4">
+          <Button type="submit" className="w-40" loading={mutation.status === "pending"}>
+            Update
+          </Button>
+          {!hasApiToken && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleBootstrap}
+              loading={mutateBootstrap.status === "pending"}
+            >
+              Bootstrap
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   );

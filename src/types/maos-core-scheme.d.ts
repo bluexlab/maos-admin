@@ -698,7 +698,6 @@ export interface components {
             permissions: components["schemas"]["Permission"][];
         };
         /** @example {
-         *       "id": "token123",
          *       "agent_id": 2,
          *       "expire_at": 1704067200,
          *       "created_by": "admin@bluextrade.com",
@@ -708,7 +707,6 @@ export interface components {
          *       ]
          *     } */
         ApiTokenCreate: {
-            id: string;
             /** Format: int64 */
             agent_id: number;
             /** Format: int64 */
