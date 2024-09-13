@@ -481,6 +481,12 @@ paths:
                           type: string
                         name:
                           type: string
+                      required:
+                        - id
+                        - provider
+                        - name
+                required:
+                  - data
               examples:
                 model_list:
                   value:
@@ -557,14 +563,20 @@ paths:
                     items:
                       $ref: "#/components/schemas/Message"
                       description: The completion of the input text.
+                required:
+                  - messages
               examples:
                 completion:
                   value:
                     messages:
                       - role: system
                         content: The capital of France is Paris.
+        "400":
+          $ref: "#/components/responses/400"
         "401":
           description: Unauthorized
+        "500":
+          $ref: "#/components/responses/500"
   /v1/embedding/models:
     get:
       summary: List embedding models.
@@ -1185,7 +1197,12 @@ paths:
               properties:
                 name:
                   type: string
-              description: Agent data to update
+                enabled:
+                  type: boolean
+                deployable:
+                  type: boolean
+                configurable:
+                  type: boolean
       responses:
         "200":
           description: Successful response
@@ -1773,6 +1790,8 @@ components:
           properties:
             text:
               type: string
+          required:
+            - text
         - type: object
           properties:
             image:
@@ -1780,6 +1799,8 @@ components:
               description: >-
                 The based64 encoded image file. Only "jpeg" and "png" are
                 supported by all providers.
+          required:
+            - image
         - type: object
           properties:
             image_url:
@@ -1788,6 +1809,8 @@ components:
               description: >-
                 The URL of the image file. Only "jpeg" and "png" are supported
                 by all providers.
+          required:
+            - image_url
     Message:
       type: object
       properties:
@@ -1801,6 +1824,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MessageContent"
+      required:
+        - role
+        - content
     Embedding:
       type: object
       properties:
@@ -2000,7 +2026,13 @@ components:
           format: int64
         name:
           type: string
-        updatable:
+        enabled:
+          type: boolean
+        deployable:
+          type: boolean
+        configurable:
+          type: boolean
+        renameable:
           type: boolean
         created_at:
           type: integer
@@ -2008,7 +2040,10 @@ components:
       required:
         - id
         - name
-        - updatable
+        - enabled
+        - deployable
+        - configurable
+        - renameable
         - created_at
       example:
         id: 16888
@@ -2019,10 +2054,17 @@ components:
       properties:
         name:
           type: string
+        enabled:
+          type: boolean
+        deployable:
+          type: boolean
+        configurable:
+          type: boolean
       required:
         - name
       example:
         name: agent-16888
+        enabled: true
     Deployment:
       type: object
       properties:

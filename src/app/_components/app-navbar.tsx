@@ -23,11 +23,6 @@ const NavItems = [
     badge: true,
   },
   {
-    title: "Models",
-    icon: Package,
-    path: "/models",
-  },
-  {
     title: "Users",
     icon: Users,
     path: "/users",

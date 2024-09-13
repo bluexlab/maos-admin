@@ -2,6 +2,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,9 @@ import { api } from "~/trpc/react";
 type Agent = {
   id: number;
   name: string;
+  renameable: boolean;
+  deployable: boolean;
+  configurable: boolean;
 };
 
 export function EditAgentDialog({
@@ -29,6 +33,8 @@ export function EditAgentDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [name, setName] = useState(agent?.name ?? "");
+  const [deployable, setDeployable] = useState(agent?.deployable ?? false);
+  const [configurable, setConfigurable] = useState(agent?.configurable ?? false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const mutation = api.agents.update.useMutation({
@@ -55,15 +61,39 @@ export function EditAgentDialog({
           <DialogDescription>Edit the agent&apos;s attribtues.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {agent.renameable && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                className="col-span-3"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
+            <Label htmlFor="deployable" className="text-right">
+              Deployable
             </Label>
-            <Input
-              id="name"
-              className="col-span-3"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+            <Checkbox
+              id="deployable"
+              checked={deployable}
+              onClick={() => setDeployable(!deployable)}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="configurable" className="text-right">
+              Configurable
+            </Label>
+            <Checkbox
+              id="configurable"
+              checked={configurable}
+              onClick={() => setConfigurable(!configurable)}
             />
           </div>
           {errorMessage && <div className="text-red-500">{errorMessage}</div>}
@@ -75,7 +105,12 @@ export function EditAgentDialog({
             loading={loading}
             className="w-40"
             onClick={() => {
-              mutation.mutate({ name, id: agent.id });
+              mutation.mutate({
+                id: agent.id,
+                name: agent.renameable ? name : undefined,
+                deployable: deployable,
+                configurable: configurable,
+              });
             }}
           >
             Save changes

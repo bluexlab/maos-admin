@@ -1,11 +1,12 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { LockKeyhole, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { type SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -36,7 +37,6 @@ type FormValues = {
 };
 
 export function ConfigEditor({ config, deploymentId, references, onSave }: ConfigEditorProps) {
-  const [minAgentVersion, setMinAgentVersion] = useState<string>("");
   const allKeys = useMemo(() => {
     const keySet = new Set(Object.keys(config.content));
     references.forEach((reference) => {
@@ -53,6 +53,7 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
     formState: { errors },
     getValues,
     watch,
+    setValue,
   } = useForm<FormValues>({
     defaultValues: {
       entries: allKeys.map((key) => ({ key, value: config.content[key] })),
@@ -60,9 +61,13 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
   });
 
   const mutation = api.deployments.updateConfig.useMutation({
-    onSuccess: () => {
-      toast.success("Configuration updated");
-      onSave();
+    onSuccess: (data) => {
+      if (data.data) {
+        toast.success("Configuration updated");
+        onSave();
+      } else {
+        toast.error(data.error);
+      }
     },
     onError: () => {
       toast.error("Failed to update configuration");
@@ -83,7 +88,7 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
       },
       {} as Record<string, string>,
     );
-    mutation.mutate({ id: deploymentId, configId: BigInt(config.id), content, minAgentVersion });
+    mutation.mutate({ id: deploymentId, configId: BigInt(config.id), content });
   };
 
   const validateUniqueKey = (key: string, index: number) => {
@@ -115,6 +120,11 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
             <tr>
               <th className="p-1">Config Key</th>
               <th className="p-1">Value</th>
+              <th className="w-6">
+                <div className="flex items-center justify-center">
+                  <LockKeyhole className="h-5 w-5" />
+                </div>
+              </th>
               {referenceNames.map((key) => (
                 <th key={key} className="p-1">
                   {key}
@@ -146,6 +156,26 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
                     <span className="col-span-4 text-red-500">
                       {errors.entries[index]?.value?.message}
                     </span>
+                  )}
+                </td>
+                <td className="w-6">
+                  {watch(`entries.${index}.key`).startsWith("KUBE_") !== true && (
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={watch(`entries.${index}.value`).startsWith("[[SECRET]]")}
+                        onClick={() => {
+                          const currentValue = watch(`entries.${index}.value`);
+                          const checked = currentValue.startsWith("[[SECRET]]");
+                          console.log("clicked", checked, currentValue);
+                          if (!checked && !currentValue.startsWith("[[SECRET]]")) {
+                            setValue(`entries.${index}.value`, `[[SECRET]]${currentValue}`);
+                          } else if (checked && currentValue.startsWith("[[SECRET]]")) {
+                            console.log("unchecking");
+                            setValue(`entries.${index}.value`, currentValue.slice(10));
+                          }
+                        }}
+                      />
+                    </div>
                   )}
                 </td>
                 {references.map((reference) => (

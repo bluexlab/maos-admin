@@ -239,11 +239,26 @@ export default function DeploymentEditor({
       {editable && (
         <div className="mt-6 flex gap-4">
           {approveRequired ? (
-            <Button onClick={() => setOpenSubmitDeploymentAlert(true)}>Submit for Review</Button>
+            <Button
+              disabled={submitMutation.status === "pending"}
+              onClick={() => setOpenSubmitDeploymentAlert(true)}
+            >
+              Submit for Review
+            </Button>
           ) : (
-            <Button onClick={() => setOpenPublishDeploymentAlert(true)}>Publish</Button>
+            <Button
+              loading={publishMutation.status === "pending"}
+              onClick={() => setOpenPublishDeploymentAlert(true)}
+            >
+              Publish
+            </Button>
           )}
-          <Button variant="danger" onClick={() => setOpenRemoveDeploymentAlert(true)}>
+          <Button
+            variant="danger"
+            disabled={publishMutation.status === "pending" || submitMutation.status === "pending"}
+            loading={removeDeploymentMutation.status === "pending"}
+            onClick={() => setOpenRemoveDeploymentAlert(true)}
+          >
             Remove
           </Button>
         </div>

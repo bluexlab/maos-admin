@@ -614,21 +614,21 @@ export interface components {
             payload: Record<string, never>;
         };
         MessageContent: {
-            text?: string;
+            text: string;
         } | {
             /** @description The based64 encoded image file. Only "jpeg" and "png" are supported by all providers. */
-            image?: string;
+            image: string;
         } | {
             /**
              * Format: uri
              * @description The URL of the image file. Only "jpeg" and "png" are supported by all providers.
              */
-            image_url?: string;
+            image_url: string;
         };
         Message: {
             /** @enum {string} */
-            role?: "system" | "assistant" | "user";
-            content?: components["schemas"]["MessageContent"][];
+            role: "system" | "assistant" | "user";
+            content: components["schemas"]["MessageContent"][];
         };
         Embedding: {
             /** @description The embedding of the text. */
@@ -723,15 +723,22 @@ export interface components {
             /** Format: int64 */
             id: number;
             name: string;
-            updatable: boolean;
+            enabled: boolean;
+            deployable: boolean;
+            configurable: boolean;
+            renameable: boolean;
             /** Format: int64 */
             created_at: number;
         };
         /** @example {
-         *       "name": "agent-16888"
+         *       "name": "agent-16888",
+         *       "enabled": true
          *     } */
         AgentCreate: {
             name: string;
+            enabled?: boolean;
+            deployable?: boolean;
+            configurable?: boolean;
         };
         Deployment: {
             /** Format: int64 */
@@ -1179,10 +1186,10 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data?: {
-                            id?: string;
-                            provider?: string;
-                            name?: string;
+                        data: {
+                            id: string;
+                            provider: string;
+                            name: string;
                         }[];
                     };
                 };
@@ -1224,10 +1231,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        messages?: components["schemas"]["Message"][];
+                        messages: components["schemas"]["Message"][];
                     };
                 };
             };
+            400: components["responses"]["400"];
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -1235,6 +1243,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            500: components["responses"]["500"];
         };
     };
     listEmbeddingModels: {
@@ -1809,6 +1818,9 @@ export interface operations {
             content: {
                 "application/json": {
                     name?: string;
+                    enabled?: boolean;
+                    deployable?: boolean;
+                    configurable?: boolean;
                 };
             };
         };

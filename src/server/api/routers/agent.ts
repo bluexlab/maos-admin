@@ -66,13 +66,24 @@ export const agentRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
-    .input(z.object({ id: z.number(), name: z.string() }))
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        deployable: z.boolean().optional(),
+        configurable: z.boolean().optional(),
+      }),
+    )
     .mutation(async ({ input }) => {
       const client = createApiClient();
       const headers = await getAuthHeaders();
       const { error, response } = await client.PATCH(`/v1/admin/agents/{id}`, {
         headers,
-        body: { name: input.name },
+        body: {
+          name: input.name,
+          deployable: input.deployable,
+          configurable: input.configurable,
+        },
         params: { path: { id: input.id } },
       });
       if (error) return handleApiError("update agent", error, response);

@@ -24,7 +24,9 @@ type Agent = {
   id: number;
   name: string;
   created_at: number;
-  updatable: boolean;
+  renameable: boolean;
+  deployable: boolean;
+  configurable: boolean;
 };
 
 const AgentList = ({
@@ -78,7 +80,13 @@ const AgentList = ({
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            {/* <TableHead>Created at</TableHead> */}
+            <TableHead>
+              <div className="flex items-center justify-center">Deployable</div>
+            </TableHead>
+            <TableHead>
+              <div className="flex items-center justify-center">Configurable</div>
+            </TableHead>
+            <TableHead></TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -86,11 +94,21 @@ const AgentList = ({
           {agents.map((agent) => (
             <TableRow key={agent.id}>
               <TableCell>{agent.name}</TableCell>
-              <TableCell className="w-20">
-                {agent.updatable && <Button onClick={() => editAgent(agent)}>Edit</Button>}
+              <TableCell>
+                <div className="flex items-center justify-center">
+                  {agent.deployable ? "✓" : ""}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center">
+                  {agent.configurable ? "✓" : ""}
+                </div>
               </TableCell>
               <TableCell className="w-20">
-                {agent.updatable && (
+                <Button onClick={() => editAgent(agent)}>Edit</Button>
+              </TableCell>
+              <TableCell className="w-20">
+                {agent.renameable && (
                   <Button variant="danger" onClick={() => alertRemoveAgent(agent.id)}>
                     Remove
                   </Button>
