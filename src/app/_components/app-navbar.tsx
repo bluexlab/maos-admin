@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Home, Package, Settings, Truck, Users } from "lucide-react";
+import { Bot, Home, Lock, Settings, Truck, Users } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "~/components/ui/badge";
 import { api } from "~/trpc/react";
@@ -20,6 +20,12 @@ const NavItems = [
     title: "Deployments",
     icon: Truck,
     path: "/deployments",
+    badge: true,
+  },
+  {
+    title: "Secrets",
+    icon: Lock,
+    path: "/secrets",
     badge: true,
   },
   {

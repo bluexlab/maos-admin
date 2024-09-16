@@ -1,9 +1,10 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { agentRouter } from "./routers/agent";
 import { deploymentRouter } from "./routers/deployment";
+import { referenceConfigsRouter } from "./routers/reference_configs";
+import { secretsRouter } from "./routers/secrets";
 import { settingRouter } from "./routers/setting";
 import { userRouter } from "./routers/user";
-import { referenceConfigsRouter } from "./routers/reference_configs";
 
 /**
  * This is the primary router for your server.
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   agents: agentRouter,
   deployments: deploymentRouter,
   referenceConfigs: referenceConfigsRouter,
+  secrets: secretsRouter,
   users: userRouter,
   settings: settingRouter,
 });
