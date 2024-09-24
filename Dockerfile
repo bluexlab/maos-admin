@@ -1,31 +1,30 @@
-FROM node:20-slim as base
+FROM node:20-alpine as base
 WORKDIR /app
-COPY package*.json ./
 
 FROM base as builder
-RUN apt-get update && \
-  apt-get install -y libssl-dev dumb-init && \
-  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN npm ci
+COPY package.json pnpm*.yaml ./
+RUN npm install -g pnpm \
+  && pnpm install --frozen-lockfile
 
 # set these only for build
 ENV NEXTAUTH_URL="http://localhost:3000"
 ENV NEXTAUTH_SECRET="--secret--"
 ENV GOOGLE_CLIENT_ID="--google-client-id--"
 ENV GOOGLE_CLIENT_SECRET="--google-client-secret--"
+ENV DATABASE_URL=postgres://localhost:5432/database
+ENV MAOS_CORE_URL=http://localhost:5000/
 
 # Build next.js app
 ADD . /app
-RUN npm run build
+RUN pnpm run build
+RUN npx tsup src/drizzle/migrate.ts
 
 # Build the production image
-FROM node:20-slim
+FROM base
 
-RUN apt-get update && \
-  apt-get install -y libssl-dev dumb-init poppler-data poppler-utils && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
@@ -41,7 +40,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/dist/migrate.cjs ./migrate.cjs
+ADD ./src/drizzle ./drizzle
 ADD ./bin/launch.sh ./launch.sh
+ADD ./bin/migrate.sh ./migrate.sh
 
 USER nextjs
 
@@ -50,4 +52,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["dumb-init", "./launch.sh"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["./launch.sh"]
