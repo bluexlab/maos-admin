@@ -56,8 +56,8 @@ export default function DeploymentEditor({
   });
 
   const editingDeployment = data?.data;
-  const agents = editingDeployment?.configs?.sort((a, b) =>
-    a.agent_name.localeCompare(b.agent_name),
+  const actors = editingDeployment?.configs?.sort((a, b) =>
+    a.actor_name.localeCompare(b.actor_name),
   );
 
   // Set reviewers from deployment
@@ -198,7 +198,7 @@ export default function DeploymentEditor({
       <Card className="w-full">
         <CardHeader>
           <div className="flex justify-between">
-            <CardTitle>Agents Config</CardTitle>
+            <CardTitle>Actors Config</CardTitle>
             <Button variant="outline" onClick={() => setOpenConfigSuitesSelectDialog(true)}>
               <Settings />
             </Button>
@@ -209,23 +209,23 @@ export default function DeploymentEditor({
             <LoadingSection />
           ) : (
             <Accordion type="single" collapsible className="w-full">
-              {agents?.map((agent) => (
-                <AccordionItem key={agent.agent_id} value={`item-${agent.agent_id}`}>
+              {actors?.map((actor) => (
+                <AccordionItem key={actor.actor_id} value={`item-${actor.actor_id}`}>
                   <AccordionTrigger className="px-4 data-[state=open]:bg-slate-800">
-                    {agent.agent_name}
+                    {actor.actor_name}
                   </AccordionTrigger>
                   <AccordionContent>
                     {editable ? (
                       <ConfigEditor
-                        config={agent}
+                        config={actor}
                         deploymentId={BigInt(editingDeployment!.id)}
                         onSave={refetch}
-                        references={referenceConfigs?.data?.[agent.agent_name]?.config_suites ?? []}
+                        references={referenceConfigs?.data?.[actor.actor_name]?.config_suites ?? []}
                       />
                     ) : (
                       <ConfigViewer
-                        config={agent}
-                        references={referenceConfigs?.data?.[agent.agent_name]?.config_suites ?? []}
+                        config={actor}
+                        references={referenceConfigs?.data?.[actor.actor_name]?.config_suites ?? []}
                       />
                     )}
                   </AccordionContent>

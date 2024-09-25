@@ -9,7 +9,7 @@ import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "MAOS Admin",
-  description: "Multiple Agents Operating System Admin",
+  description: "Multiple Actors Operating System Admin",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

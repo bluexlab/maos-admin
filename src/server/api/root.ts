@@ -1,5 +1,5 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
-import { agentRouter } from "./routers/agent";
+import { actorRouter } from "./routers/actor";
 import { deploymentRouter } from "./routers/deployment";
 import { referenceConfigsRouter } from "./routers/reference_configs";
 import { secretsRouter } from "./routers/secrets";
@@ -12,7 +12,7 @@ import { userRouter } from "./routers/user";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  agents: agentRouter,
+  actors: actorRouter,
   deployments: deploymentRouter,
   referenceConfigs: referenceConfigsRouter,
   secrets: secretsRouter,

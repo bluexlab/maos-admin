@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { settings } from "~/drizzle/schema";
-import { encryptApiToken } from "~/lib/apiToken";
+import { encryptApiToken, flushApiToken } from "~/lib/apiToken";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createApiClient, getAuthHeaders, handleApiError } from "./common";
 
@@ -25,10 +25,10 @@ export const settingRouter = createTRPCRouter({
     const client = createApiClient();
     const headers = await getAuthHeaders("bootstrap-token");
     const {
-      data: agent,
+      data: actor,
       error,
       response,
-    } = await client.POST("/v1/admin/agents", {
+    } = await client.POST("/v1/admin/actors", {
       headers,
       body: { name: "maos-admin-portal" },
     });
@@ -41,7 +41,7 @@ export const settingRouter = createTRPCRouter({
     } = await client.POST("/v1/admin/api_tokens", {
       headers,
       body: {
-        agent_id: agent.id,
+        actor_id: actor.id,
         expire_at: Math.floor(Date.now() / 1000) + 20 * 365 * 86400, // 20 years from now
         created_by: ctx.session.user.email!,
         permissions: ["admin"],
@@ -78,6 +78,7 @@ export const settingRouter = createTRPCRouter({
             target: [settings.key],
             set: { value: encrypted, updatedAt: sql`NOW()` },
           });
+        await flushApiToken();
       }
       if (input.deploymentApproveRequired !== undefined) {
         const client = createApiClient();

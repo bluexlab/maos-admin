@@ -12,9 +12,9 @@ const NavItems = [
     path: "/dashboard",
   },
   {
-    title: "Agents",
+    title: "Actors",
     icon: Bot,
-    path: "/agents",
+    path: "/actors",
   },
   {
     title: "Deployments",

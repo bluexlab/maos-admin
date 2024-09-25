@@ -20,7 +20,6 @@ type ConfigEditorProps = {
   deploymentId: bigint;
   config: {
     id: number;
-    minAgentVersion?: string;
     content: Record<string, string>;
   };
   references: ReferenceType[];
@@ -98,22 +97,6 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      {/* <div className="grid gap-4 py-4">
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="name" className="text-right">
-            Minimal Agent Version
-          </Label>
-          <Input
-            id="minAgentVersion"
-            className="col-span-3"
-            value={minAgentVersion}
-            onChange={(e) => setMinAgentVersion(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="my-4">
-        <hr className="border-t border-gray-300" />
-      </div> */}
       <div className="w-full bg-slate-800 p-4">
         <table className="w-full">
           <thead>

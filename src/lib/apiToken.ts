@@ -51,6 +51,10 @@ export async function getApiToken(): Promise<string | null> {
   return apiTokenCache?.value ?? null;
 }
 
+export async function flushApiToken() {
+  apiTokenCache = null;
+}
+
 async function fetchApiToken() {
   const token = await db.query.settings.findFirst({
     where: eq(settings.key, "api-token"),

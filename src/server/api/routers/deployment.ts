@@ -122,7 +122,6 @@ export const deploymentRouter = createTRPCRouter({
       z.object({
         id: z.bigint(),
         configId: z.bigint(),
-        minAgentVersion: z.string().optional(),
         content: z.record(z.string(), z.string()),
       }),
     )
@@ -134,7 +133,6 @@ export const deploymentRouter = createTRPCRouter({
         params: { path: { id: Number(input.configId) } },
         body: {
           user: ctx.session.user.email!,
-          min_agent_version: input.minAgentVersion,
           content: input.content,
         },
       });

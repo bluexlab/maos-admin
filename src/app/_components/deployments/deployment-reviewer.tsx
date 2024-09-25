@@ -20,7 +20,7 @@ export default function DeploymentReviewer({ deploymentId }: { deploymentId: num
   const router = useRouter();
   const { data, isLoading } = api.deployments.get.useQuery({ id: deploymentId });
   const deployment = data?.data;
-  const agents = deployment?.configs?.sort((a, b) => a.agent_name.localeCompare(b.agent_name));
+  const actors = deployment?.configs?.sort((a, b) => a.actor_name.localeCompare(b.actor_name));
   const [openPublishDeploymentAlert, setOpenPublishDeploymentAlert] = useState(false);
   const [openRejectDeploymentAlert, setOpenRejectDeploymentAlert] = useState(false);
 
@@ -68,20 +68,20 @@ export default function DeploymentReviewer({ deploymentId }: { deploymentId: num
     <div className="flex flex-col gap-4">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Agents Config</CardTitle>
+          <CardTitle>Actors Config</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <LoadingSection />
           ) : (
             <Accordion type="single" collapsible className="w-full">
-              {agents?.map((agent) => (
-                <AccordionItem key={agent.agent_id} value={`item-${agent.agent_id}`}>
+              {actors?.map((actor) => (
+                <AccordionItem key={actor.actor_id} value={`item-${actor.actor_id}`}>
                   <AccordionTrigger className="px-4 data-[state=open]:bg-slate-800">
-                    Agent {agent.agent_name}
+                    Actor {actor.actor_name}
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ConfigViewer config={agent} references={[]} />
+                    <ConfigViewer config={actor} references={[]} />
                   </AccordionContent>
                 </AccordionItem>
               ))}

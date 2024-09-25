@@ -12,7 +12,6 @@ type ReferenceType = {
 type ConfigEditorProps = {
   config: {
     id: number;
-    minAgentVersion?: string;
     content: Record<string, string>;
   };
   references: ReferenceType[];

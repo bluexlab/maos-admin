@@ -14,7 +14,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 
-export function AddAgentDialog({
+export function AddActorDialog({
   open,
   onOpenChange,
 }: {
@@ -24,14 +24,14 @@ export function AddAgentDialog({
   const [name, setName] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-  const mutation = api.agents.create.useMutation({
+  const mutation = api.actors.create.useMutation({
     onSuccess: () => {
       onOpenChange(false);
       router.refresh();
-      toast.success("Agent added successfully");
+      toast.success("Actor added successfully");
     },
     onError: (error) => {
-      setErrorMessage("Failed to add agent: " + error.message);
+      setErrorMessage("Failed to add actor: " + error.message);
     },
   });
   const loading = mutation.status === "pending";
@@ -39,8 +39,8 @@ export function AddAgentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Agent</DialogTitle>
-          <DialogDescription>Type the name of the agent you want to add.</DialogDescription>
+          <DialogTitle>Add Actor</DialogTitle>
+          <DialogDescription>Type the name of the actor you want to add.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">

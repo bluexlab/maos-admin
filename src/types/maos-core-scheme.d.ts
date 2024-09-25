@@ -49,12 +49,12 @@ export interface paths {
         put?: never;
         /**
          * Create a new asynchronous invocation job.
-         * @description This endpoint allows an agent user to create a new asynchronous invocation job.
-         *     The job is added to a queue and will be processed by the next available agent.
+         * @description This endpoint allows an actor user to create a new asynchronous invocation job.
+         *     The job is added to a queue and will be processed by the next available actor.
          *
          *     Key features:
          *     - Asynchronous execution: The endpoint returns immediately with an invocation ID.
-         *     - Job queuing: The invocation is queued for processing by available agents.
+         *     - Job queuing: The invocation is queued for processing by available actors.
          *     - Status tracking: The returned invocation ID can be used to query the job's status and results.
          *
          *     Usage flow:
@@ -87,7 +87,7 @@ export interface paths {
         put?: never;
         /**
          * Create a new synchronous invocation job
-         * @description This endpoint allows an agent user to create and execute a new invocation job synchronously.
+         * @description This endpoint allows an actor user to create and execute a new invocation job synchronously.
          *     The request will wait for the job to complete before returning the result.
          *
          *     Key features:
@@ -97,7 +97,7 @@ export interface paths {
          *
          *     Usage flow:
          *     1. Submit the invocation job using this endpoint.
-         *     2. The agent retrieves and processes the job.
+         *     2. The actor retrieves and processes the job.
          *     3. Once the job is completed, the endpoint returns with the full result.
          *
          *     Response includes:
@@ -129,16 +129,16 @@ export interface paths {
         };
         /**
          * Retrieve the next available invocation job for processing
-         * @description This endpoint is used by agents to fetch the next available invocation job.
-         *     It allows agents to retrieve jobs for processing.
+         * @description This endpoint is used by actors to fetch the next available invocation job.
+         *     It allows actors to retrieve jobs for processing.
          *
          *     Key features:
          *     - State transition: Upon successful retrieval, the job state changes from 'available' to 'running'.
-         *     - Exclusive access: Once a job is retrieved, it's locked for the assigned agent to prevent duplicate processing.
+         *     - Exclusive access: Once a job is retrieved, it's locked for the assigned actor to prevent duplicate processing.
          *
          *     Note:
          *     - If no jobs are available, a 404 status is returned.
-         *     - Agents should implement appropriate error handling and retry mechanisms.
+         *     - Actors should implement appropriate error handling and retry mechanisms.
          *
          */
         get: operations["getNextInvocation"];
@@ -386,41 +386,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/admin/agents": {
+    "/v1/admin/api_tokens/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List Agents */
-        get: operations["adminListAgents"];
+        get?: never;
         put?: never;
-        /** Create a new Agent */
-        post: operations["adminCreateAgent"];
+        post?: never;
+        /** Delete an API token. If token not found, it will do nothing and return 204 */
+        delete: operations["adminDeleteApiToken"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/actors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Actors */
+        get: operations["adminListActors"];
+        put?: never;
+        /** Create a new Actor */
+        post: operations["adminCreateActor"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/admin/agents/{id}": {
+    "/v1/admin/actors/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get one specific Agents */
-        get: operations["adminGetAgent"];
+        /** Get one specific Actor */
+        get: operations["adminGetActor"];
         put?: never;
         post?: never;
-        /** Delete one specific Agent */
-        delete: operations["adminDeleteAgent"];
+        /** Delete one specific Actor */
+        delete: operations["adminDeleteActor"];
         options?: never;
         head?: never;
-        /** Update one specific Agent */
-        patch: operations["adminUpdateAgent"];
+        /** Update one specific Actor */
+        patch: operations["adminUpdateActor"];
         trace?: never;
     };
     "/v1/admin/deployments": {
@@ -627,7 +644,7 @@ export interface components {
             state: components["schemas"]["InvocationState"];
             /**
              * Format: int64
-             * @description The timestamp when the job was retrieved and attempted by agent
+             * @description The timestamp when the job was retrieved and attempted by actor
              */
             attempted_at?: number;
             /**
@@ -659,10 +676,28 @@ export interface components {
              * @description The URL of the image file. Only "jpeg" and "png" are supported by all providers.
              */
             image_url: string;
+        } | {
+            /** @description The result of a tool call. */
+            tool_result: {
+                /** @description The ID of the tool call. It must be the same as the ID of the tool call in the tool_call property. */
+                tool_call_id: string;
+                /** @description The result of the tool call. */
+                result: Record<string, never>;
+                is_error?: boolean;
+            };
+        } | {
+            tool_call: {
+                /** @description The ID of the tool call. It must be the same as the ID of the tool_call_id in the tool_result property. */
+                id?: string;
+                /** @description The name of the tool/function. */
+                name?: string;
+                /** @description The arguments of the tool/function. */
+                arguments?: Record<string, never>;
+            };
         };
         Message: {
             /** @enum {string} */
-            role: "system" | "assistant" | "user";
+            role: "system" | "assistant" | "user" | "tool";
             content: components["schemas"]["MessageContent"][];
         };
         Embedding: {
@@ -712,7 +747,7 @@ export interface components {
         Permission: "config:read" | "invocation:create" | "invocation:read" | "invocation:respond" | "admin";
         /** @example {
          *       "ID": "token123",
-         *       "agent_id": 1,
+         *       "actor_id": 1,
          *       "expire_at": 1672531200,
          *       "created_by": "admin@example.com",
          *       "created_at": 1640995200,
@@ -724,7 +759,7 @@ export interface components {
         ApiToken: {
             id: string;
             /** Format: int64 */
-            agent_id: number;
+            actor_id: number;
             /** Format: int64 */
             expire_at: number;
             created_by: string;
@@ -733,7 +768,7 @@ export interface components {
             permissions: components["schemas"]["Permission"][];
         };
         /** @example {
-         *       "agent_id": 2,
+         *       "actor_id": 2,
          *       "expire_at": 1704067200,
          *       "created_by": "admin@bluextrade.com",
          *       "Permissions": [
@@ -743,7 +778,7 @@ export interface components {
          *     } */
         ApiTokenCreate: {
             /** Format: int64 */
-            agent_id: number;
+            actor_id: number;
             /** Format: int64 */
             expire_at: number;
             created_by: string;
@@ -751,25 +786,28 @@ export interface components {
         };
         /** @example {
          *       "id": 16888,
-         *       "name": "agent-16888",
-         *       "created_at": 1640995200
+         *       "name": "actor-16888",
+         *       "created_at": 1640995200,
+         *       "token_count": 1
          *     } */
-        Agent: {
+        Actor: {
             /** Format: int64 */
             id: number;
             name: string;
             enabled: boolean;
             deployable: boolean;
             configurable: boolean;
+            /** Format: int64 */
+            token_count: number;
             renameable: boolean;
             /** Format: int64 */
             created_at: number;
         };
         /** @example {
-         *       "name": "agent-16888",
+         *       "name": "actor-16888",
          *       "enabled": true
          *     } */
-        AgentCreate: {
+        ActorCreate: {
             name: string;
             enabled?: boolean;
             deployable?: boolean;
@@ -799,9 +837,9 @@ export interface components {
             /** Format: int64 */
             id: number;
             /** Format: int64 */
-            agent_id: number;
-            agent_name: string;
-            min_agent_version?: string;
+            actor_id: number;
+            actor_name: string;
+            min_actor_version?: string;
             content: {
                 [key: string]: string;
             };
@@ -836,7 +874,7 @@ export interface components {
             display_name: string;
         };
         ReferenceConfigSuite: {
-            agent_name: string;
+            actor_name: string;
             config_suites: {
                 suite_name: string;
                 configs: {
@@ -899,8 +937,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Specifies the version of the agent in the format x.y.z where x, y, and z are non-negative integers. */
-                "X-Agent-Version"?: string;
+                /** @description Specifies the version of the actor in the format x.y.z where x, y, and z are non-negative integers. */
+                "X-Actor-Version"?: string;
             };
             path?: never;
             cookie?: never;
@@ -946,8 +984,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @description The name of the agent to process the invocation job */
-                    agent: string;
+                    /** @description The name of the actor to process the invocation job */
+                    actor: string;
                     /** @description The metadata of the invocation job */
                     meta: Record<string, never>;
                     /** @description The payload for the invocation job */
@@ -992,8 +1030,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @description The name of the agent to process the invocation job */
-                    agent: string;
+                    /** @description The name of the actor to process the invocation job */
+                    actor: string;
                     /** @description The metadata of the invocation job */
                     meta: Record<string, never>;
                     /** @description The payload for the invocation job */
@@ -1604,8 +1642,8 @@ export interface operations {
                 page?: number;
                 /** @description Page number (default 10) */
                 page_size?: number;
-                /** @description Filter by agent ID */
-                agent_id?: number;
+                /** @description Filter by actor ID */
+                actor_id?: number;
                 /** @description Filter by creator */
                 created_by?: string;
             };
@@ -1649,7 +1687,7 @@ export interface operations {
         requestBody: {
             content: {
                 /** @example {
-                 *       "AgentID": 3,
+                 *       "ActorID": 3,
                  *       "ExpireAt": 1735689600,
                  *       "Permissions": [
                  *         "config:read",
@@ -1680,14 +1718,43 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
-    adminListAgents: {
+    adminDeleteApiToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the API token to delete */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API token deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminListActors: {
         parameters: {
             query?: {
                 /** @description Page number (default 1) */
                 page?: number;
                 /** @description Page number (default 10) */
                 page_size?: number;
-                /** @description Filter by agent ID */
+                /** @description Filter by actor ID */
                 name?: string;
             };
             header?: never;
@@ -1703,7 +1770,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["Agent"][];
+                        data: components["schemas"]["Actor"][];
                         meta: {
                             total_pages: number;
                         };
@@ -1720,7 +1787,7 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
-    adminCreateAgent: {
+    adminCreateActor: {
         parameters: {
             query?: never;
             header?: never;
@@ -1730,9 +1797,9 @@ export interface operations {
         requestBody: {
             content: {
                 /** @example {
-                 *       "name": "agent-16888"
+                 *       "name": "actor-16888"
                  *     } */
-                "application/json": components["schemas"]["AgentCreate"];
+                "application/json": components["schemas"]["ActorCreate"];
             };
         };
         responses: {
@@ -1742,7 +1809,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Agent"];
+                    "application/json": components["schemas"]["Actor"];
                 };
             };
             400: components["responses"]["400"];
@@ -1756,12 +1823,12 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
-    adminGetAgent: {
+    adminGetActor: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Agent ID */
+                /** @description Actor ID */
                 id: number;
             };
             cookie?: never;
@@ -1775,7 +1842,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["Agent"];
+                        data: components["schemas"]["Actor"];
                     };
                 };
             };
@@ -1786,7 +1853,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Agent not found */
+            /** @description Actor not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1796,12 +1863,12 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
-    adminDeleteAgent: {
+    adminDeleteActor: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Agent ID */
+                /** @description Actor ID */
                 id: number;
             };
             cookie?: never;
@@ -1822,14 +1889,14 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Agent not found */
+            /** @description Actor not found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Agent is referenced by config */
+            /** @description Actor is referenced by config */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1839,12 +1906,12 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
-    adminUpdateAgent: {
+    adminUpdateActor: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Agent ID */
+                /** @description Actor ID */
                 id: number;
             };
             cookie?: never;
@@ -1867,7 +1934,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["Agent"];
+                        data: components["schemas"]["Actor"];
                     };
                 };
             };
@@ -1879,7 +1946,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Agent not found */
+            /** @description Actor not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2245,7 +2312,7 @@ export interface operations {
             content: {
                 "application/json": {
                     user: string;
-                    min_agent_version?: string;
+                    min_actor_version?: string;
                     content?: {
                         [key: string]: string;
                     };

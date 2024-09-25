@@ -4,7 +4,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createApiClient, getAuthHeaders, handleApiError } from "./common";
 
 type ReferenceConfigSuite = {
-  agent_name: string;
+  actor_name: string;
   config_suites: {
     suite_name: string;
     configs: Record<string, string>;
@@ -58,7 +58,7 @@ export const referenceConfigsRouter = createTRPCRouter({
 
       const result = referenceConfigs.data.data.reduce(
         (acc, curr) => {
-          acc[curr.agent_name] = {
+          acc[curr.actor_name] = {
             ...curr,
             config_suites: curr.config_suites.filter((cs) =>
               input.referenceConfigs?.includes(cs.suite_name),
@@ -72,13 +72,13 @@ export const referenceConfigsRouter = createTRPCRouter({
       for (const deployment of deployments) {
         if (deployment.data?.configs) {
           for (const config of deployment.data.configs) {
-            const { agent_name, content } = config;
+            const { actor_name, content } = config;
             const suite_name = deployment.data.name;
 
-            if (!result[agent_name]) {
-              result[agent_name] = { agent_name, config_suites: [] };
+            if (!result[actor_name]) {
+              result[actor_name] = { actor_name, config_suites: [] };
             }
-            result[agent_name].config_suites.push({ suite_name, configs: content });
+            result[actor_name].config_suites.push({ suite_name, configs: content });
           }
         }
       }

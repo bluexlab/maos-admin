@@ -27,28 +27,28 @@ const handleApiError = (
   return err(new Error(`Failed to ${operation}: ${error?.error}, ${response.statusText}`));
 };
 
-export const agentRouter = createTRPCRouter({
+export const actorRouter = createTRPCRouter({
   list: protectedProcedure
     .input(z.object({ page: z.number().optional() }))
     .query(async ({ input }) => {
       const client = createApiClient();
       const headers = await getAuthHeaders();
-      const { data, error, response } = await client.GET("/v1/admin/agents", {
+      const { data, error, response } = await client.GET("/v1/admin/actors", {
         headers,
         params: { query: { page: input.page ?? 1 } },
       });
-      if (error) return handleApiError("list agents", error, response);
+      if (error) return handleApiError("list actors", error, response);
       return ok({ data: data.data, totalPages: data.meta.total_pages });
     }),
 
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     const client = createApiClient();
     const headers = await getAuthHeaders();
-    const { data, error, response } = await client.GET(`/v1/admin/agents/{id}`, {
+    const { data, error, response } = await client.GET(`/v1/admin/actors/{id}`, {
       headers,
       params: { path: { id: input.id } },
     });
-    if (error) return handleApiError("get agent", error, response);
+    if (error) return handleApiError("get actor", error, response);
     return ok(data.data);
   }),
 
@@ -57,11 +57,11 @@ export const agentRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const client = createApiClient();
       const headers = await getAuthHeaders();
-      const { data, error, response } = await client.POST("/v1/admin/agents", {
+      const { data, error, response } = await client.POST("/v1/admin/actors", {
         headers,
         body: { name: input.name },
       });
-      if (error) return handleApiError("create agent", error, response);
+      if (error) return handleApiError("create actor", error, response);
       return ok(data.id);
     }),
 
@@ -77,7 +77,7 @@ export const agentRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const client = createApiClient();
       const headers = await getAuthHeaders();
-      const { error, response } = await client.PATCH(`/v1/admin/agents/{id}`, {
+      const { error, response } = await client.PATCH(`/v1/admin/actors/{id}`, {
         headers,
         body: {
           name: input.name,
@@ -86,48 +86,70 @@ export const agentRouter = createTRPCRouter({
         },
         params: { path: { id: input.id } },
       });
-      if (error) return handleApiError("update agent", error, response);
+      if (error) return handleApiError("update actor", error, response);
       return ok(true);
     }),
 
   remove: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     const client = createApiClient();
     const headers = await getAuthHeaders();
-    const { error, response } = await client.DELETE(`/v1/admin/agents/{id}`, {
+    const { error, response } = await client.DELETE(`/v1/admin/actors/{id}`, {
       headers,
       params: { path: { id: input.id } },
     });
     if (error) {
-      if (response.status === 404) throw new Error("Agent not found");
-      if (response.status === 409) throw new Error("Agent is referenced by configs");
-      handleApiError("remove agent", error, response);
+      if (response.status === 404) throw new Error("Actor not found");
+      if (response.status === 409) throw new Error("Actor is referenced by configs");
+      handleApiError("remove actor", error, response);
     }
     return true;
   }),
 
-  // getConfig: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
-  //   const client = createApiClient();
-  //   const headers = await getAuthHeaders();
+  getTokens: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const client = createApiClient();
+    const headers = await getAuthHeaders();
+    const { data, error, response } = await client.GET("/v1/admin/api_tokens", {
+      headers,
+      params: { query: { actor_id: input.id } },
+    });
+    if (error) return handleApiError("get tokens", error, response);
+    return ok(data.data);
+  }),
 
-  //   const { data, error, response } = await client.GET(`/v1/admin/agents/{id}/config`, {
-  //     headers,
-  //     params: { path: { id: input.id } },
-  //   });
-  //   if (error) {
-  //     if (response.status === 404) {
-  //       const { data, error, response } = await client.GET(`/v1/admin/agents/{id}`, {
-  //         headers,
-  //         params: { path: { id: input.id } },
-  //       });
-  //       if (error) return handleApiError("get agent config", error, response);
-  //       return ok({
-  //         agent_id: data.data.id,
-  //         agent_name: data.data.name,
-  //         content: {},
-  //       });
-  //     }
-  //     return handleApiError("get agent config", error, response);
-  //   }
-  //   return ok(data.data);
-  // }),
+  createToken: protectedProcedure
+    .input(
+      z.object({
+        actorId: z.number(),
+        expire_at: z.number(),
+        permissions: z.array(z.string()),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const client = createApiClient();
+      const headers = await getAuthHeaders();
+      const { data, error, response } = await client.POST("/v1/admin/api_tokens", {
+        headers,
+        body: {
+          actor_id: input.actorId,
+          expire_at: input.expire_at,
+          created_by: ctx.session.user.email!,
+          permissions: input.permissions,
+        },
+      });
+      if (error) return handleApiError("create token", error, response);
+      return ok(data.id);
+    }),
+
+  removeToken: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const client = createApiClient();
+      const headers = await getAuthHeaders();
+      const { error, response } = await client.DELETE(`/v1/admin/api_tokens/{id}`, {
+        headers,
+        params: { path: { id: input.id } },
+      });
+      if (error) return handleApiError("remove token", error, response);
+      return ok(true);
+    }),
 });

@@ -15,7 +15,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 
-type Agent = {
+type Actor = {
   id: number;
   name: string;
   renameable: boolean;
@@ -23,33 +23,33 @@ type Agent = {
   configurable: boolean;
 };
 
-export function EditAgentDialog({
+export function EditActorDialog({
   open,
   onOpenChange,
-  agent,
+  actor,
 }: {
-  agent: Agent | null;
+  actor: Actor | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [name, setName] = useState(agent?.name ?? "");
-  const [deployable, setDeployable] = useState(agent?.deployable ?? false);
-  const [configurable, setConfigurable] = useState(agent?.configurable ?? false);
+  const [name, setName] = useState(actor?.name ?? "");
+  const [deployable, setDeployable] = useState(actor?.deployable ?? false);
+  const [configurable, setConfigurable] = useState(actor?.configurable ?? false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-  const mutation = api.agents.update.useMutation({
+  const mutation = api.actors.update.useMutation({
     onSuccess: () => {
       onOpenChange(false);
       router.refresh();
-      toast.success("Agent updated successfully");
+      toast.success("Actor updated successfully");
     },
     onError: (error) => {
-      setErrorMessage("Failed to update agent: " + error.message);
+      setErrorMessage("Failed to update actor: " + error.message);
     },
   });
 
   const loading = mutation.status === "pending";
-  if (!agent) {
+  if (!actor) {
     return null;
   }
 
@@ -57,11 +57,11 @@ export function EditAgentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Agent</DialogTitle>
-          <DialogDescription>Edit the agent&apos;s attribtues.</DialogDescription>
+          <DialogTitle>Edit Actor</DialogTitle>
+          <DialogDescription>Edit the actor&apos;s attributes.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {agent.renameable && (
+          {actor.renameable && (
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -106,8 +106,8 @@ export function EditAgentDialog({
             className="w-40"
             onClick={() => {
               mutation.mutate({
-                id: agent.id,
-                name: agent.renameable ? name : undefined,
+                id: actor.id,
+                name: actor.renameable ? name : undefined,
                 deployable: deployable,
                 configurable: configurable,
               });
