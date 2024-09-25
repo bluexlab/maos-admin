@@ -162,7 +162,7 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
                   {watch(`entries.${index}.key`).startsWith("KUBE_") !== true && (
                     <div className="flex items-center justify-center">
                       <Checkbox
-                        checked={watch(`entries.${index}.value`).startsWith("[[SECRET]]")}
+                        checked={watch(`entries.${index}.value`)?.startsWith("[[SECRET]]")}
                         onClick={() => {
                           const currentValue = watch(`entries.${index}.value`);
                           const checked = currentValue.startsWith("[[SECRET]]");
