@@ -1,6 +1,4 @@
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -11,8 +9,17 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { toast } from "sonner";
 import { api } from "~/trpc/react";
+import { useRouter } from "next/navigation";
+import { Label } from "~/components/ui/label";
 
 export function AddActorDialog({
   open,
@@ -21,52 +28,71 @@ export function AddActorDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [name, setName] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<string | undefined>(undefined);
   const router = useRouter();
+
   const mutation = api.actors.create.useMutation({
-    onSuccess: () => {
-      onOpenChange(false);
+    onSuccess: async () => {
+      toast.success("Actor created successfully");
       router.refresh();
-      toast.success("Actor added successfully");
+      setName("");
+      setRole(undefined);
+      onOpenChange(false);
     },
     onError: (error) => {
-      setErrorMessage("Failed to add actor: " + error.message);
+      toast.error("Error: " + error.message);
     },
   });
-  const loading = mutation.status === "pending";
+
+  const isLoading = mutation.status === "pending";
+
+  function onSubmit() {
+    if (name && role) {
+      mutation.mutate({ name, role: role as "agent" | "portal" | "service" | "user" | "other" });
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Actor</DialogTitle>
-          <DialogDescription>Type the name of the actor you want to add.</DialogDescription>
+          <DialogDescription>Add a new actor to the system.</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
+        <div className="space-y-4">
+          <div>
             <Label htmlFor="name" className="text-right">
               Name
             </Label>
             <Input
               id="name"
-              className="col-span-3"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder="Actor name"
             />
           </div>
-          {errorMessage && <div className="text-red-500">{errorMessage}</div>}
+          <div>
+            <Label htmlFor="role" className="text-right">
+              Role
+            </Label>
+            <Select onValueChange={setRole} value={role}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="portal">Portal</SelectItem>
+                <SelectItem value="service">Service</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <DialogFooter>
-          <Button
-            type="submit"
-            disabled={!name}
-            loading={loading}
-            className="w-40"
-            onClick={() => {
-              mutation.mutate({ name });
-            }}
-          >
-            Save changes
+          <Button onClick={onSubmit} disabled={isLoading || !name || !role}>
+            Add Actor
           </Button>
         </DialogFooter>
       </DialogContent>

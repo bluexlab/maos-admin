@@ -794,6 +794,8 @@ export interface components {
             /** Format: int64 */
             id: number;
             name: string;
+            /** @enum {string} */
+            role: "agent" | "service" | "portal" | "user" | "other";
             enabled: boolean;
             deployable: boolean;
             configurable: boolean;
@@ -805,10 +807,13 @@ export interface components {
         };
         /** @example {
          *       "name": "actor-16888",
+         *       "role": "user",
          *       "enabled": true
          *     } */
         ActorCreate: {
             name: string;
+            /** @enum {string} */
+            role: "agent" | "service" | "portal" | "user" | "other";
             enabled?: boolean;
             deployable?: boolean;
             configurable?: boolean;
@@ -1368,6 +1373,11 @@ export interface operations {
                     model_id: string;
                     /** @description The text to embedded. */
                     input: string[];
+                    /**
+                     * @description The type of the input.
+                     * @enum {string}
+                     */
+                    input_type?: "document" | "query";
                 };
             };
         };
@@ -1920,6 +1930,8 @@ export interface operations {
             content: {
                 "application/json": {
                     name?: string;
+                    /** @enum {string} */
+                    role?: "agent" | "service" | "portal" | "user" | "other";
                     enabled?: boolean;
                     deployable?: boolean;
                     configurable?: boolean;

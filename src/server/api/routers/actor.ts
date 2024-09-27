@@ -53,13 +53,18 @@ export const actorRouter = createTRPCRouter({
   }),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) }))
+    .input(
+      z.object({
+        name: z.string().min(1),
+        role: z.enum(["agent", "portal", "service", "user", "other"]),
+      }),
+    )
     .mutation(async ({ input }) => {
       const client = createApiClient();
       const headers = await getAuthHeaders();
       const { data, error, response } = await client.POST("/v1/admin/actors", {
         headers,
-        body: { name: input.name },
+        body: { name: input.name, role: input.role },
       });
       if (error) return handleApiError("create actor", error, response);
       return ok(data.id);
@@ -70,6 +75,7 @@ export const actorRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         name: z.string().optional(),
+        role: z.enum(["agent", "portal", "service", "user", "other"]).optional(),
         deployable: z.boolean().optional(),
         configurable: z.boolean().optional(),
       }),
@@ -81,6 +87,7 @@ export const actorRouter = createTRPCRouter({
         headers,
         body: {
           name: input.name,
+          role: input.role,
           deployable: input.deployable,
           configurable: input.configurable,
         },

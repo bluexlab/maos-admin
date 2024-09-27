@@ -13,11 +13,19 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { api } from "~/trpc/react";
 
 type Actor = {
   id: number;
   name: string;
+  role: string;
   renameable: boolean;
   deployable: boolean;
   configurable: boolean;
@@ -33,6 +41,7 @@ export function EditActorDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [name, setName] = useState(actor?.name ?? "");
+  const [role, setRole] = useState<string>(actor?.role ?? "");
   const [deployable, setDeployable] = useState(actor?.deployable ?? false);
   const [configurable, setConfigurable] = useState(actor?.configurable ?? false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -74,6 +83,23 @@ export function EditActorDialog({
               />
             </div>
           )}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="role" className="text-right">
+              Role
+            </Label>
+            <Select onValueChange={setRole} value={role}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="portal">Portal</SelectItem>
+                <SelectItem value="service">Service</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="deployable" className="text-right">
@@ -107,6 +133,7 @@ export function EditActorDialog({
             onClick={() => {
               mutation.mutate({
                 id: actor.id,
+                role: role as "user" | "agent" | "portal" | "service" | "other",
                 name: actor.renameable ? name : undefined,
                 deployable: deployable,
                 configurable: configurable,

@@ -30,7 +30,7 @@ export const settingRouter = createTRPCRouter({
       response,
     } = await client.POST("/v1/admin/actors", {
       headers,
-      body: { name: "maos-admin-portal" },
+      body: { name: "maos-admin-portal", role: "user" },
     });
     if (error) return handleApiError("bootstrap", error, response);
 

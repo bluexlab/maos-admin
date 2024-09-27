@@ -24,6 +24,7 @@ import Link from "next/link";
 type Actor = {
   id: number;
   name: string;
+  role: string;
   created_at: number;
   renameable: boolean;
   deployable: boolean;
@@ -89,6 +90,9 @@ const ActorList = ({
               <div className="flex items-center justify-center">Configurable</div>
             </TableHead>
             <TableHead>
+              <div className="flex items-center justify-center">Role</div>
+            </TableHead>
+            <TableHead>
               <div className="flex items-center justify-center">Tokens</div>
             </TableHead>
             <TableHead></TableHead>
@@ -108,6 +112,9 @@ const ActorList = ({
                 <div className="flex items-center justify-center">
                   {actor.configurable ? "✓" : ""}
                 </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center">{actor.role}</div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center justify-center">
