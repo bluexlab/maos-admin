@@ -477,6 +477,23 @@ export interface paths {
         patch: operations["adminUpdateDeployment"];
         trace?: never;
     };
+    "/v1/admin/deployments/{id}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart a specific Deployment. */
+        post: operations["adminRestartDeployment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/deployments/{id}/submit": {
         parameters: {
             query?: never;
@@ -2165,6 +2182,48 @@ export interface operations {
                         data: components["schemas"]["Deployment"];
                     };
                 };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Deployment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminRestartDeployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Deployment ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    user: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful restarted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Unauthorized */
             401: {

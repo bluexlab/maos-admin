@@ -1,7 +1,7 @@
 "use client";
 
 import { LockKeyhole, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { type SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 

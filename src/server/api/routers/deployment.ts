@@ -178,4 +178,18 @@ export const deploymentRouter = createTRPCRouter({
       if (error) return handleApiError("publish deployment", error, response);
       return { data: { result: "ok" } };
     }),
+
+  restart: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const client = createApiClient();
+      const headers = await getAuthHeaders();
+      const { error, response } = await client.POST("/v1/admin/deployments/{id}/restart", {
+        headers,
+        params: { path: { id: input.id } },
+        body: { user: ctx.session.user.email! },
+      });
+      if (error) return handleApiError("restart deployment", error, response);
+      return { data: { result: "ok" } };
+    }),
 });

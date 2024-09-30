@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, X } from "lucide-react";
+import { RotateCcw, Settings, X } from "lucide-react";
 import { type Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -33,11 +33,13 @@ export default function DeploymentEditor({
   session,
   approveRequired,
   allSuites,
+  restartable,
 }: {
   deploymentId: number;
   session: Session;
   approveRequired: boolean;
   allSuites: string[];
+  restartable: boolean;
 }) {
   const router = useRouter();
   const [reviewers, setReviewers] = useState<string[]>([]);
@@ -123,6 +125,19 @@ export default function DeploymentEditor({
     },
   });
 
+  const restartDeploymentMutation = api.deployments.restart.useMutation({
+    onSuccess: (data) => {
+      if (data.data) {
+        toast.success("Deployment restarted");
+      } else {
+        toast.error("Failed to restart deployment: " + data.error);
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const addReviewer = (reviewer: string) => {
     const updatedReviewers = [...reviewers, reviewer];
     setReviewers(updatedReviewers);
@@ -148,6 +163,10 @@ export default function DeploymentEditor({
   const publishDeployment = () => {
     setOpenPublishDeploymentAlert(false);
     publishMutation.mutate({ id: editingDeployment!.id });
+  };
+
+  const restartDeployment = () => {
+    restartDeploymentMutation.mutate({ id: editingDeployment!.id });
   };
 
   const editable = ["draft"].includes(editingDeployment?.status ?? "unknown");
@@ -199,9 +218,16 @@ export default function DeploymentEditor({
         <CardHeader>
           <div className="flex justify-between">
             <CardTitle>Actors Config</CardTitle>
-            <Button variant="outline" onClick={() => setOpenConfigSuitesSelectDialog(true)}>
-              <Settings />
-            </Button>
+            <div>
+              {restartable && (
+                <Button variant="outline" onClick={() => restartDeployment()}>
+                  <RotateCcw />
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setOpenConfigSuitesSelectDialog(true)}>
+                <Settings />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

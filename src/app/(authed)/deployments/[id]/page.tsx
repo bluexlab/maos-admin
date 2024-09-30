@@ -52,6 +52,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               session={session!}
               allSuites={allSuites.data ?? []}
               approveRequired={approveRequired}
+              restartable={dep.status === "deployed"}
             />
           ),
         (e) => {
