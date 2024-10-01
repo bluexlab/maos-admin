@@ -5,6 +5,7 @@ import { referenceConfigsRouter } from "./routers/reference_configs";
 import { secretsRouter } from "./routers/secrets";
 import { settingRouter } from "./routers/setting";
 import { userRouter } from "./routers/user";
+import { podsRouter } from "./routers/pods";
 
 /**
  * This is the primary router for your server.
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   referenceConfigs: referenceConfigsRouter,
   secrets: secretsRouter,
   users: userRouter,
+  pods: podsRouter,
   settings: settingRouter,
 });
 
