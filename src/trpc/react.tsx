@@ -24,7 +24,6 @@ export const api = createTRPCReact<AppRouter>({
   overrides: {
     useMutation: {
       onSuccess: async (opts) => {
-        console.log("-------------- onSuccess", opts);
         await opts.originalFn();
         // Invalidate all queries in the react-query cache:
         await opts.queryClient.invalidateQueries();

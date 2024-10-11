@@ -74,7 +74,7 @@ const ActorTokenList = ({ tokens, actorId }: ActorTokenListProps) => {
       router.refresh();
     },
     onError: (error) => {
-      toast.error(`Failed to remove token: ${error.message}`);
+      toast.error(`Failed to remove token: ${error.message}`, { duration: 0 });
     },
   });
 
@@ -85,7 +85,7 @@ const ActorTokenList = ({ tokens, actorId }: ActorTokenListProps) => {
       router.refresh();
     },
     onError: (error) => {
-      toast.error(`Failed to create token: ${error.message}`);
+      toast.error(`Failed to create token: ${error.message}`, { duration: 0 });
     },
   });
 

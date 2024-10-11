@@ -41,7 +41,22 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
     references.forEach((reference) => {
       Object.keys(reference.configs).forEach((key) => keySet.add(key));
     });
-    return Array.from(keySet).sort();
+    return Array.from(keySet).sort((a, b) => {
+      const getPriority = (key: string): number => {
+        if (key.startsWith("KUBE_MIGRATE")) return 0;
+        if (key.startsWith("KUBE_")) return 1;
+        return 2;
+      };
+
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      return a.localeCompare(b);
+    });
   }, [references, config.content]);
   const referenceNames = references.map((reference) => reference.suite_name);
 
@@ -65,11 +80,11 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
         toast.success("Configuration updated");
         onSave();
       } else {
-        toast.error(data.error);
+        toast.error(data.error, { duration: 0 });
       }
     },
     onError: () => {
-      toast.error("Failed to update configuration");
+      toast.error("Failed to update configuration", { duration: 0 });
     },
   });
   const loading = mutation.status === "pending";

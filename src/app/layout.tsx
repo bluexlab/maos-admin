@@ -19,7 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <NextTopLoader color="#2292dd" />
         <TRPCReactProvider>{children}</TRPCReactProvider>
-        <Toaster theme="light" position="top-center" richColors={true} />
+        <Toaster theme="light" position="top-center" richColors={true} closeButton />
       </body>
     </html>
   );

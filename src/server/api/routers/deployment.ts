@@ -16,8 +16,15 @@ export const deploymentRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const client = createApiClient();
       const headers = await getAuthHeaders();
+
+      // Sync reference config suites when listing deployments
+      const syncClient = createApiClient();
+      syncClient.POST("/v1/admin/reference_config_suites/sync", { headers }).catch((error) => {
+        console.error("Failed to sync reference config suites:", error);
+      });
+
+      const client = createApiClient();
       const { data, error, response } = await client.GET("/v1/admin/deployments", {
         headers,
         params: {
@@ -43,7 +50,18 @@ export const deploymentRouter = createTRPCRouter({
       params: { path: { id: input.id } },
     });
     if (error) return handleApiError("get deployment", error, response);
-    return { data };
+    return { data, error: null };
+  }),
+
+  result: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const client = createApiClient();
+    const headers = await getAuthHeaders();
+    const { data, error, response } = await client.GET("/v1/admin/deployments/{id}/result", {
+      headers,
+      params: { path: { id: input.id } },
+    });
+    if (error) return handleApiError("get deployment result", error, response);
+    return { data, error: null };
   }),
 
   validName: protectedProcedure

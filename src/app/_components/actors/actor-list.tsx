@@ -29,6 +29,7 @@ type Actor = {
   renameable: boolean;
   deployable: boolean;
   configurable: boolean;
+  migratable: boolean;
   token_count: number;
 };
 
@@ -55,7 +56,7 @@ const ActorList = ({
       router.refresh();
     },
     onError: (err) => {
-      toast.error("Failed to remove actor: " + err.message);
+      toast.error("Failed to remove actor: " + err.message, { duration: 0 });
       setOpenRemoveActorAlert(false);
     },
   });
@@ -90,6 +91,9 @@ const ActorList = ({
               <div className="flex items-center justify-center">Configurable</div>
             </TableHead>
             <TableHead>
+              <div className="flex items-center justify-center">Migratable</div>
+            </TableHead>
+            <TableHead>
               <div className="flex items-center justify-center">Role</div>
             </TableHead>
             <TableHead>
@@ -111,6 +115,11 @@ const ActorList = ({
               <TableCell>
                 <div className="flex items-center justify-center">
                   {actor.configurable ? "✓" : ""}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center">
+                  {actor.migratable ? "✓" : ""}
                 </div>
               </TableCell>
               <TableCell>

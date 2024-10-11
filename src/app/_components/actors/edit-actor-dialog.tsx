@@ -29,6 +29,7 @@ type Actor = {
   renameable: boolean;
   deployable: boolean;
   configurable: boolean;
+  migratable: boolean; // Add this line
 };
 
 export function EditActorDialog({
@@ -44,6 +45,7 @@ export function EditActorDialog({
   const [role, setRole] = useState<string>(actor?.role ?? "");
   const [deployable, setDeployable] = useState(actor?.deployable ?? false);
   const [configurable, setConfigurable] = useState(actor?.configurable ?? false);
+  const [migratable, setMigratable] = useState(actor?.migratable ?? false); // Add this line
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const mutation = api.actors.update.useMutation({
@@ -102,26 +104,53 @@ export function EditActorDialog({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="deployable" className="text-right">
-              Deployable
-            </Label>
-            <Checkbox
-              id="deployable"
-              checked={deployable}
-              onClick={() => setDeployable(!deployable)}
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="configurable" className="text-right">
               Configurable
             </Label>
             <Checkbox
               id="configurable"
               checked={configurable}
+              disabled={migratable || deployable}
               onClick={() => setConfigurable(!configurable)}
             />
           </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="deployable" className="text-right">
+              Deployable
+            </Label>
+            <Checkbox
+              id="deployable"
+              checked={deployable}
+              disabled={migratable}
+              onClick={() => {
+                const newDeployable = !deployable;
+                setDeployable(newDeployable);
+                if (newDeployable) {
+                  setConfigurable(true);
+                }
+              }}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="migratable" className="text-right">
+              Migratable
+            </Label>
+            <Checkbox
+              id="migratable"
+              checked={migratable}
+              onClick={() => {
+                const newMigratable = !migratable;
+                setMigratable(newMigratable);
+                if (newMigratable) {
+                  setDeployable(true);
+                  setConfigurable(true);
+                }
+              }}
+            />
+          </div>
+
           {errorMessage && <div className="text-red-500">{errorMessage}</div>}
         </div>
         <DialogFooter>
@@ -137,6 +166,7 @@ export function EditActorDialog({
                 name: actor.renameable ? name : undefined,
                 deployable: deployable,
                 configurable: configurable,
+                migratable: migratable,
               });
             }}
           >

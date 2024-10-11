@@ -57,6 +57,9 @@ export const actorRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1),
         role: z.enum(["agent", "portal", "service", "user", "other"]),
+        deployable: z.boolean().optional(),
+        configurable: z.boolean().optional(),
+        migratable: z.boolean().optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -64,7 +67,13 @@ export const actorRouter = createTRPCRouter({
       const headers = await getAuthHeaders();
       const { data, error, response } = await client.POST("/v1/admin/actors", {
         headers,
-        body: { name: input.name, role: input.role },
+        body: {
+          name: input.name,
+          role: input.role,
+          deployable: input.deployable,
+          configurable: input.configurable,
+          migratable: input.migratable,
+        },
       });
       if (error) return handleApiError("create actor", error, response);
       return ok(data.id);
@@ -78,6 +87,7 @@ export const actorRouter = createTRPCRouter({
         role: z.enum(["agent", "portal", "service", "user", "other"]).optional(),
         deployable: z.boolean().optional(),
         configurable: z.boolean().optional(),
+        migratable: z.boolean().optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -90,6 +100,7 @@ export const actorRouter = createTRPCRouter({
           role: input.role,
           deployable: input.deployable,
           configurable: input.configurable,
+          migratable: input.migratable,
         },
         params: { path: { id: input.id } },
       });
@@ -117,7 +128,7 @@ export const actorRouter = createTRPCRouter({
     const headers = await getAuthHeaders();
     const { data, error, response } = await client.GET("/v1/admin/api_tokens", {
       headers,
-      params: { query: { actor_id: input.id } },
+      params: { query: { actor_id: input.id, page: 0, page_size: 1000 } },
     });
     if (error) return handleApiError("get tokens", error, response);
     return ok(data.data);

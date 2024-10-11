@@ -6,6 +6,7 @@ import { api } from "~/trpc/server";
 export default async function Page() {
   const session = await getServerAuthSession();
   const settings = await api.settings.get();
+  const suggestDeploymentName = await api.settings.suggestDeploymentName();
   const hasApiToken = await api.settings.hasApiToken();
 
   return (
@@ -16,6 +17,7 @@ export default async function Page() {
       <SettingList
         settings={{
           deploymentApproveRequired: settings.data?.deployment_approve_required,
+          suggestDeploymentName: suggestDeploymentName.data,
         }}
         hasApiToken={hasApiToken.data}
       />

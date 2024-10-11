@@ -12,7 +12,7 @@ type ReferenceConfigSuite = {
 };
 
 export const referenceConfigsRouter = createTRPCRouter({
-  suites: protectedProcedure.query(async ({}) => {
+  suites: protectedProcedure.query(async ({ }) => {
     const client = createApiClient();
     const headers = await getAuthHeaders();
     const { data, error, response } = await client.GET("/v1/admin/reference_config_suites", {

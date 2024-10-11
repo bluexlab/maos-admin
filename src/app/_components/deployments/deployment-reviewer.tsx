@@ -31,11 +31,11 @@ export default function DeploymentReviewer({ deploymentId }: { deploymentId: num
         router.push(`/deployments`);
         router.refresh();
       } else {
-        toast.error("Failed to publish deployment: " + data.error);
+        toast.error("Failed to publish deployment: " + data.error, { duration: 0 });
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 
@@ -50,7 +50,7 @@ export default function DeploymentReviewer({ deploymentId }: { deploymentId: num
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 

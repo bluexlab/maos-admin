@@ -12,6 +12,7 @@ import { api } from "~/trpc/react";
 
 type SettingsType = {
   deploymentApproveRequired?: boolean | undefined;
+  suggestDeploymentName?: boolean | undefined;
 };
 
 const SettingList = ({
@@ -25,6 +26,9 @@ const SettingList = ({
   const [deploymentApproveRequired, setDeploymentApproveRequired] = useState(
     settings.deploymentApproveRequired,
   );
+  const [suggestDeploymentName, setSuggestDeploymentName] = useState(
+    settings.suggestDeploymentName ?? false,
+  );
 
   const router = useRouter();
   const mutation = api.settings.update.useMutation({
@@ -33,11 +37,11 @@ const SettingList = ({
         toast.success("Settings updated");
         router.refresh();
       } else {
-        toast.error("Failed to update settings: " + data.error);
+        toast.error("Failed to update settings: " + data.error, { duration: 0 });
       }
     },
     onError: () => {
-      toast.error("Failed to update settings");
+      toast.error("Failed to update settings", { duration: 0 });
     },
   });
 
@@ -47,19 +51,21 @@ const SettingList = ({
         toast.success("Bootstrap successful");
         router.refresh();
       } else {
-        toast.error("Failed to bootstrap: " + data.error);
+        toast.error("Failed to bootstrap: " + data.error, { duration: 0 });
       }
     },
     onError: (e) => {
-      toast.error(`Failed to bootstrap: ${e.message}`);
+      toast.error(`Failed to bootstrap: ${e.message}`, { duration: 0 });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("suggestDeploymentName", suggestDeploymentName);
     mutation.mutate({
       apiToken,
       deploymentApproveRequired,
+      suggestDeploymentName,
     });
   };
 
@@ -79,6 +85,16 @@ const SettingList = ({
             />
             <Label htmlFor="approveDeployment">Deployment require approval</Label>
           </div>
+
+          <div className="my-2 flex items-center gap-2">
+            <Checkbox
+              id="suggestDeploymentName"
+              checked={suggestDeploymentName}
+              onClick={() => setSuggestDeploymentName(!suggestDeploymentName)}
+            />
+            <Label htmlFor="suggestDeploymentName">Suggest deployment name</Label>
+          </div>
+
           <div className="flex items-center gap-2">
             <Label className="w-40" htmlFor="apiToken">
               API Token

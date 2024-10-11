@@ -33,7 +33,7 @@ const SecretList = ({ secrets }: { secrets: Secret[] }) => {
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
   const mutationDeleteSecret = api.secrets.delete.useMutation({
@@ -42,7 +42,7 @@ const SecretList = ({ secrets }: { secrets: Secret[] }) => {
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
   const mutationUpdateKey = api.secrets.updateKey.useMutation({
@@ -52,7 +52,7 @@ const SecretList = ({ secrets }: { secrets: Secret[] }) => {
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
   const mutationDeleteKey = api.secrets.deleteKey.useMutation({
@@ -61,7 +61,7 @@ const SecretList = ({ secrets }: { secrets: Secret[] }) => {
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
   const updating =

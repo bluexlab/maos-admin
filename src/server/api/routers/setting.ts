@@ -7,13 +7,18 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createApiClient, getAuthHeaders, handleApiError } from "./common";
 
 export const settingRouter = createTRPCRouter({
-  get: protectedProcedure.query(async ({}) => {
+  get: protectedProcedure.query(async ({ }) => {
     const client = createApiClient();
     const headers = await getAuthHeaders();
     const { data, error, response } = await client.GET("/v1/admin/setting", { headers });
     if (error) return handleApiError("get setting", error, response);
 
     return { data };
+  }),
+
+  suggestDeploymentName: protectedProcedure.query(async ({ ctx }) => {
+    const recs = await ctx.db.select().from(settings).where(eq(settings.key, "suggest-deployment-name"));
+    return { data: recs[0]?.value === "true" };
   }),
 
   hasApiToken: protectedProcedure.query(async ({ ctx }) => {
@@ -66,6 +71,7 @@ export const settingRouter = createTRPCRouter({
       z.object({
         apiToken: z.string().optional(),
         deploymentApproveRequired: z.boolean().optional(),
+        suggestDeploymentName: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -80,6 +86,7 @@ export const settingRouter = createTRPCRouter({
           });
         await flushApiToken();
       }
+
       if (input.deploymentApproveRequired !== undefined) {
         const client = createApiClient();
         const headers = await getAuthHeaders();
@@ -91,6 +98,20 @@ export const settingRouter = createTRPCRouter({
         });
         if (error) return handleApiError("update setting", error, response);
       }
+
+      if (input.suggestDeploymentName !== undefined) {
+        await ctx.db
+          .insert(settings)
+          .values({
+            key: "suggest-deployment-name",
+            value: input.suggestDeploymentName ? "true" : "false",
+          })
+          .onConflictDoUpdate({
+            target: [settings.key],
+            set: { value: input.suggestDeploymentName ? "true" : "false", updatedAt: sql`NOW()` },
+          });
+      }
+
       return { data: true, error: null };
     }),
 });

@@ -7,7 +7,7 @@ import { api } from "~/trpc/server";
 export default async function Page() {
   const session = await getServerAuthSession();
   const deployments = await api.deployments.list({});
-
+  const suggestDeploymentName = await api.settings.suggestDeploymentName();
   if (!session) return null;
 
   return (
@@ -17,7 +17,10 @@ export default async function Page() {
         <h1 className="text-lg font-semibold md:text-2xl">Latest Deployments</h1>
       </div>
       {deployments?.data ? (
-        <DeploymentList deployments={deployments.data} />
+        <DeploymentList
+          deployments={deployments.data}
+          suggestDeploymentName={suggestDeploymentName.data}
+        />
       ) : (
         <div className="text-red-500">Error: {deployments.error}</div>
       )}

@@ -76,7 +76,7 @@ export default function DeploymentEditor({
 
   const updateMutation = api.deployments.update.useMutation({
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 
@@ -91,7 +91,7 @@ export default function DeploymentEditor({
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 
@@ -106,7 +106,7 @@ export default function DeploymentEditor({
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 
@@ -121,7 +121,7 @@ export default function DeploymentEditor({
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 
@@ -134,7 +134,7 @@ export default function DeploymentEditor({
       }
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 

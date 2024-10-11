@@ -34,7 +34,7 @@ export function SetSecretDialog({
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 0 });
     },
   });
 

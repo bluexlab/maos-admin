@@ -16,7 +16,13 @@ import { AddDeploymentDialog } from "./add-deployment-dialog";
 
 type Deployment = components["schemas"]["Deployment"];
 
-const DeploymentList = ({ deployments }: { deployments: Deployment[] }) => {
+const DeploymentList = ({
+  deployments,
+  suggestDeploymentName,
+}: {
+  deployments: Deployment[];
+  suggestDeploymentName: boolean;
+}) => {
   const [openAddDeploymentDialog, setOpenAddDeploymentDialog] = useState(false);
 
   return (
@@ -29,7 +35,9 @@ const DeploymentList = ({ deployments }: { deployments: Deployment[] }) => {
             <TableHead>Created By</TableHead>
             <TableHead>Deployed At</TableHead>
             <TableHead>Notes</TableHead>
-            <TableHead></TableHead>
+            <TableHead>
+              <Button onClick={() => setOpenAddDeploymentDialog(true)}>Add Deployment</Button>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -66,9 +74,16 @@ const DeploymentList = ({ deployments }: { deployments: Deployment[] }) => {
                     <Link href={`/deployments/${deployment.id}`}>Edit</Link>
                   </Button>
                 ) : (
-                  <Button asChild>
-                    <Link href={`/deployments/${deployment.id}`}>View</Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button asChild>
+                      <Link href={`/deployments/${deployment.id}`}>View</Link>
+                    </Button>
+                    {["deployed", "failed", "cancelled"].includes(deployment.status) && (
+                      <Button asChild>
+                        <Link href={`/deployments/${deployment.id}/result`}>Logs</Link>
+                      </Button>
+                    )}
+                  </div>
                 )}
               </TableCell>
             </TableRow>
@@ -82,6 +97,7 @@ const DeploymentList = ({ deployments }: { deployments: Deployment[] }) => {
 
       <AddDeploymentDialog
         open={openAddDeploymentDialog}
+        suggestDeploymentName={suggestDeploymentName}
         onOpenChange={setOpenAddDeploymentDialog}
       />
     </div>

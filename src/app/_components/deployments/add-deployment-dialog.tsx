@@ -1,5 +1,7 @@
+"use client";
+
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // {{ added useEffect }}
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
@@ -17,8 +19,10 @@ import { api } from "~/trpc/react";
 export function AddDeploymentDialog({
   open,
   onOpenChange,
+  suggestDeploymentName,
 }: {
   open: boolean;
+  suggestDeploymentName: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [name, setName] = useState<string>("");
@@ -39,9 +43,24 @@ export function AddDeploymentDialog({
       setErrorMessage("Failed to add deployment: " + error.message);
     },
   });
+
+  useEffect(() => {
+    if (open && suggestDeploymentName) {
+      const now = new Date();
+      const suggestedName = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+      setName(suggestedName);
+    }
+  }, [open, suggestDeploymentName]);
+
+  const handleOpenChange = (open: boolean) => {
+    setName("");
+    setErrorMessage(null);
+    onOpenChange(open);
+  };
+
   const loading = mutation.status === "pending";
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Deployment</DialogTitle>
@@ -60,7 +79,7 @@ export function AddDeploymentDialog({
             />
           </div>
           {errorMessage && <div className="flex justify-end text-red-500">{errorMessage}</div>}
-          {validName?.data === false && (
+          {validName?.data === false && name !== "" && (
             <div className="flex justify-end text-red-500">Deployment name already exists</div>
           )}
         </div>

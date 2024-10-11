@@ -545,6 +545,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/deployments/{id}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the result of a deployment */
+        get: operations["adminGetDeploymentResult"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/configs/{id}": {
         parameters: {
             query?: never;
@@ -591,6 +608,23 @@ export interface paths {
         get: operations["adminListReferenceConfigSuites"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/reference_config_suites/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sync reference config suites */
+        post: operations["adminSyncReferenceConfigSuites"];
         delete?: never;
         options?: never;
         head?: never;
@@ -689,6 +723,8 @@ export interface components {
              * @description The timestamp when the job was finalized
              */
             finalized_at?: number;
+            /** @description The metadata of the invocation job. It contains 'kind' to specify the type of the invocation job and 'trace_id' to trace the invocation job */
+            meta: Record<string, never>;
             /** @description The result of the invocation job */
             result?: Record<string, never>;
             /** @description The errors of the invocation job */
@@ -697,7 +733,7 @@ export interface components {
         InvocationJob: {
             /** @description The unique identifier for the invocation job */
             id: string;
-            /** @description The metadata of the invocation job. it contains 'kind' to specify the type of the invocation job */
+            /** @description The metadata of the invocation job. It contains 'kind' to specify the type of the invocation job and 'trace_id' to trace the invocation job */
             meta: Record<string, never>;
             /** @description The payload for the invocation job */
             payload: Record<string, never>;
@@ -719,7 +755,7 @@ export interface components {
                 /** @description The ID of the tool call. It must be the same as the ID of the tool call in the tool_call property. */
                 tool_call_id: string;
                 /** @description The result of the tool call. */
-                result: Record<string, never>;
+                result: string;
                 is_error?: boolean;
             };
         } | {
@@ -736,6 +772,15 @@ export interface components {
             /** @enum {string} */
             role: "system" | "assistant" | "user" | "tool";
             content: components["schemas"]["MessageContent"][];
+        };
+        /** @description The tool that is used to process the message. */
+        Tool: {
+            /** @description The name of the tool. */
+            name?: string;
+            /** @description The description of the tool. */
+            description?: string;
+            /** @description The parameters of the tool. It's defined by JSON schema. */
+            parameters?: Record<string, never>;
         };
         Embedding: {
             /** @description The embedding of the text. */
@@ -836,6 +881,7 @@ export interface components {
             enabled: boolean;
             deployable: boolean;
             configurable: boolean;
+            migratable: boolean;
             /** Format: int64 */
             token_count: number;
             renameable: boolean;
@@ -854,13 +900,14 @@ export interface components {
             enabled?: boolean;
             deployable?: boolean;
             configurable?: boolean;
+            migratable?: boolean;
         };
         Deployment: {
             /** Format: int64 */
             id: number;
             name: string;
             /** @enum {string} */
-            status: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "retired" | "cancelled";
+            status: "draft" | "reviewing" | "approved" | "rejected" | "deploying" | "deployed" | "retired" | "cancelled" | "failed";
             reviewers: string[];
             notes?: Record<string, never>;
             /** Format: int64 */
@@ -897,7 +944,7 @@ export interface components {
             id: number;
             name: string;
             /** @enum {string} */
-            status: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "retired" | "cancelled";
+            status: "draft" | "reviewing" | "approved" | "rejected" | "deploying" | "deployed" | "retired" | "cancelled" | "failed";
             reviewers: string[];
             notes?: Record<string, never>;
             /** Format: int64 */
@@ -1042,7 +1089,7 @@ export interface operations {
                 "application/json": {
                     /** @description The name of the actor to process the invocation job */
                     actor: string;
-                    /** @description The metadata of the invocation job */
+                    /** @description The metadata of the invocation job. If trace_id is not provided, it will be generated. */
                     meta: Record<string, never>;
                     /** @description The payload for the invocation job */
                     payload: Record<string, never>;
@@ -1088,7 +1135,7 @@ export interface operations {
                 "application/json": {
                     /** @description The name of the actor to process the invocation job */
                     actor: string;
-                    /** @description The metadata of the invocation job */
+                    /** @description The metadata of the invocation job. If trace_id is not provided, it will be generated. */
                     meta: Record<string, never>;
                     /** @description The payload for the invocation job */
                     payload: Record<string, never>;
@@ -1301,7 +1348,10 @@ export interface operations {
     };
     listCompletionModels: {
         parameters: {
-            query?: never;
+            query: {
+                /** @description A unique identifier for the request. */
+                trace_id: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1342,9 +1392,12 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": {
+                    /** @description A unique identifier for the request. */
+                    trace_id: string;
                     /** @description The model id. */
                     model_id: string;
                     messages: components["schemas"]["Message"][];
+                    tools?: components["schemas"]["Tool"][];
                     /** @description Custom text sequences that will cause the model to stop generating. */
                     stop_sequences?: string[];
                     temperature?: number;
@@ -1858,7 +1911,12 @@ export interface operations {
         requestBody: {
             content: {
                 /** @example {
-                 *       "name": "actor-16888"
+                 *       "name": "actor-16888",
+                 *       "role": "user",
+                 *       "enabled": true,
+                 *       "deployable": true,
+                 *       "configurable": true,
+                 *       "migratable": true
                  *     } */
                 "application/json": components["schemas"]["ActorCreate"];
             };
@@ -1986,6 +2044,7 @@ export interface operations {
                     enabled?: boolean;
                     deployable?: boolean;
                     configurable?: boolean;
+                    migratable?: boolean;
                 };
             };
         };
@@ -2403,6 +2462,51 @@ export interface operations {
             500: components["responses"]["500"];
         };
     };
+    adminGetDeploymentResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Deployment ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        status: string;
+                        error?: string;
+                        logs?: {
+                            [key: string]: Record<string, never>;
+                        };
+                    };
+                };
+            };
+            400: components["responses"]["400"];
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Deployment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
     adminUpdateConfig: {
         parameters: {
             query?: never;
@@ -2544,6 +2648,32 @@ export interface operations {
                         data: components["schemas"]["ReferenceConfigSuite"][];
                     };
                 };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            500: components["responses"]["500"];
+        };
+    };
+    adminSyncReferenceConfigSuites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description reference config suites synced */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Unauthorized */
             401: {

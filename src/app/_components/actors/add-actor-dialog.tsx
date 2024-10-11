@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { api } from "~/trpc/react";
 import { useRouter } from "next/navigation";
 import { Label } from "~/components/ui/label";
+import { Checkbox } from "~/components/ui/checkbox";
 
 export function AddActorDialog({
   open,
@@ -30,6 +31,9 @@ export function AddActorDialog({
 }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState<string | undefined>(undefined);
+  const [deployable, setDeployable] = useState(false);
+  const [configurable, setConfigurable] = useState(false);
+  const [migratable, setMigratable] = useState(false);
   const router = useRouter();
 
   const mutation = api.actors.create.useMutation({
@@ -41,7 +45,7 @@ export function AddActorDialog({
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error("Error: " + error.message);
+      toast.error("Error: " + error.message, { duration: 0 });
     },
   });
 
@@ -88,6 +92,54 @@ export function AddActorDialog({
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="configurable" className="text-right">
+              Configurable
+            </Label>
+            <Checkbox
+              id="configurable"
+              checked={configurable}
+              disabled={migratable || deployable}
+              onClick={() => setConfigurable(!configurable)}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="deployable" className="text-right">
+              Deployable
+            </Label>
+            <Checkbox
+              id="deployable"
+              checked={deployable}
+              disabled={migratable}
+              onClick={() => {
+                const newDeployable = !deployable;
+                setDeployable(newDeployable);
+                if (newDeployable) {
+                  setConfigurable(true);
+                }
+              }}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="migratable" className="text-right">
+              Migratable
+            </Label>
+            <Checkbox
+              id="migratable"
+              checked={migratable}
+              onClick={() => {
+                const newMigratable = !migratable;
+                setMigratable(newMigratable);
+                if (newMigratable) {
+                  setDeployable(true);
+                  setConfigurable(true);
+                }
+              }}
+            />
           </div>
         </div>
         <DialogFooter>

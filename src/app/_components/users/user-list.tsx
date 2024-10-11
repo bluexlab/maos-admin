@@ -47,7 +47,7 @@ const UserList = ({
       router.refresh();
     },
     onError: () => {
-      toast.error("Failed to remove user");
+      toast.error("Failed to remove user", { duration: 0 });
       setOpenRemoveUserAlert(false);
     },
   });
