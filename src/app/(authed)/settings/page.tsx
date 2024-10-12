@@ -4,10 +4,12 @@ import { getServerAuthSession } from "~/server/auth";
 import { api } from "~/trpc/server";
 
 export default async function Page() {
-  const session = await getServerAuthSession();
-  const settings = await api.settings.get();
-  const suggestDeploymentName = await api.settings.suggestDeploymentName();
-  const hasApiToken = await api.settings.hasApiToken();
+  const [session, localSettings, deploymentApproveRequired, availableSuites] = await Promise.all([
+    getServerAuthSession(),
+    api.settings.getLocal(),
+    api.settings.deploymentApproveRequired(),
+    api.referenceConfigs.suites(),
+  ]);
 
   return (
     <AppFrame session={session}>
@@ -15,11 +17,10 @@ export default async function Page() {
         <h1 className="text-lg font-semibold md:text-2xl">Settings</h1>
       </div>
       <SettingList
-        settings={{
-          deploymentApproveRequired: settings.data?.deployment_approve_required,
-          suggestDeploymentName: suggestDeploymentName.data,
-        }}
-        hasApiToken={hasApiToken.data}
+        localSettings={localSettings}
+        currentDeploymentApproveRequired={deploymentApproveRequired.data ?? false}
+        availableSuites={availableSuites.data ?? []}
+        hasApiToken={localSettings.hasApiToken}
       />
     </AppFrame>
   );

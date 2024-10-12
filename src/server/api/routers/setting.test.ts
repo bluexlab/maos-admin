@@ -13,7 +13,9 @@ describe.concurrent("settingRouter API", () => {
 
     testWithDb("get returns UNAUTHORIZED", async ({ expect, db }) => {
       const { caller } = useCaller({ db, session });
-      await expect(caller.settings.get()).rejects.toThrow(new TRPCError({ code: "UNAUTHORIZED" }));
+      await expect(caller.settings.deploymentApproveRequired()).rejects.toThrow(
+        new TRPCError({ code: "UNAUTHORIZED" }),
+      );
     });
 
     testWithDb("update returns UNAUTHORIZED", async ({ expect, db }) => {
@@ -45,8 +47,8 @@ describe.concurrent("settingRouter API", () => {
       });
 
       try {
-        const result = await caller.settings.get();
-        expect(result).toEqual({ data: mockSettings });
+        const result = await caller.settings.deploymentApproveRequired();
+        expect(result).toEqual({ data: mockSettings.deployment_approve_required });
 
         // Verify that fetch was called with the correct URL and custom request object
         expect(global.fetch).toHaveBeenCalledWith(

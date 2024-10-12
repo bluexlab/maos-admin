@@ -5,31 +5,32 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { type LocalSettingsType } from "~/server/api/routers/setting";
 import { api } from "~/trpc/react";
 
-type SettingsType = {
-  deploymentApproveRequired?: boolean | undefined;
-  suggestDeploymentName?: boolean | undefined;
-};
-
 const SettingList = ({
-  settings,
+  localSettings,
+  availableSuites,
   hasApiToken,
+  currentDeploymentApproveRequired,
 }: {
-  settings: SettingsType;
+  localSettings: LocalSettingsType;
+  currentDeploymentApproveRequired: boolean;
+  availableSuites: string[];
   hasApiToken: boolean;
 }) => {
   const [apiToken, setApiToken] = useState("");
   const [deploymentApproveRequired, setDeploymentApproveRequired] = useState(
-    settings.deploymentApproveRequired,
+    currentDeploymentApproveRequired,
   );
   const [suggestDeploymentName, setSuggestDeploymentName] = useState(
-    settings.suggestDeploymentName ?? false,
+    localSettings.suggestDeploymentName,
   );
-
+  const [preferSuites, setPreferSuites] = useState(localSettings.preferSuites ?? availableSuites);
   const router = useRouter();
   const mutation = api.settings.update.useMutation({
     onSuccess: (data) => {
@@ -61,11 +62,11 @@ const SettingList = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("suggestDeploymentName", suggestDeploymentName);
     mutation.mutate({
       apiToken,
       deploymentApproveRequired,
       suggestDeploymentName,
+      preferSuites,
     });
   };
 
@@ -75,8 +76,8 @@ const SettingList = ({
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-col space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex flex-col space-y-6">
           <div className="my-2 flex items-center gap-2">
             <Checkbox
               id="approveDeployment"
@@ -97,14 +98,42 @@ const SettingList = ({
 
           <div className="flex items-center gap-2">
             <Label className="w-40" htmlFor="apiToken">
+              Prefer Suites
+            </Label>
+            <Card className="flex-1">
+              <CardContent className="flex flex-col gap-4 p-4">
+                {availableSuites.sort().map((suite) => (
+                  <div key={suite} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`preferSuite-${suite}`}
+                      checked={preferSuites.includes(suite)}
+                      onClick={() =>
+                        setPreferSuites(
+                          preferSuites.includes(suite)
+                            ? preferSuites.filter((s) => s !== suite)
+                            : [...preferSuites, suite],
+                        )
+                      }
+                    />
+                    <Label htmlFor={`preferSuite-${suite}`}>{suite}</Label>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Label className="w-40" htmlFor="apiToken">
               API Token
             </Label>
-            <Input
-              id="apiToken"
-              value={apiToken}
-              onChange={(e) => setApiToken(e.target.value)}
-              placeholder="Enter your API token"
-            />
+            <div className="flex-1">
+              <Input
+                id="apiToken"
+                value={apiToken}
+                onChange={(e) => setApiToken(e.target.value)}
+                placeholder="Enter your API token"
+              />
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-start gap-4">

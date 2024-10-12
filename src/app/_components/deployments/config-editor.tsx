@@ -37,11 +37,12 @@ type FormValues = {
 
 export function ConfigEditor({ config, deploymentId, references, onSave }: ConfigEditorProps) {
   const allKeys = useMemo(() => {
-    const keySet = new Set(Object.keys(config.content));
-    references.forEach((reference) => {
-      Object.keys(reference.configs).forEach((key) => keySet.add(key));
-    });
+    const keySet = new Set([
+      ...Object.keys(config.content),
+      ...references.flatMap((reference) => Object.keys(reference.configs)),
+    ]);
     return Array.from(keySet).sort((a, b) => {
+      // Sort KUBE_MIGRATE to the top, then KUBE_, then the rest
       const getPriority = (key: string): number => {
         if (key.startsWith("KUBE_MIGRATE")) return 0;
         if (key.startsWith("KUBE_")) return 1;
@@ -164,11 +165,9 @@ export function ConfigEditor({ config, deploymentId, references, onSave }: Confi
                         onClick={() => {
                           const currentValue = watch(`entries.${index}.value`);
                           const checked = currentValue.startsWith("[[SECRET]]");
-                          console.log("clicked", checked, currentValue);
                           if (!checked && !currentValue.startsWith("[[SECRET]]")) {
                             setValue(`entries.${index}.value`, `[[SECRET]]${currentValue}`);
                           } else if (checked && currentValue.startsWith("[[SECRET]]")) {
-                            console.log("unchecking");
                             setValue(`entries.${index}.value`, currentValue.slice(10));
                           }
                         }}

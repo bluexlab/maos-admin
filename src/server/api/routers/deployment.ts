@@ -9,7 +9,7 @@ export const deploymentRouter = createTRPCRouter({
       z.object({
         name: z.string().optional(),
         status: z
-          .enum(["draft", "reviewing", "approved", "rejected", "deployed", "retired", "cancelled"])
+          .enum(["draft", "reviewing", "approved", "rejected", "deployed", "deploying", "retired", "cancelled", "failed"])
           .optional(),
         reviewer: z.string().optional(),
         id: z.array(z.number()).optional(),

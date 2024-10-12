@@ -1,29 +1,40 @@
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { type DatabaseType } from "~/drizzle";
 import { settings } from "~/drizzle/schema";
 import { encryptApiToken, flushApiToken } from "~/lib/apiToken";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createApiClient, getAuthHeaders, handleApiError } from "./common";
 
+export interface LocalSettingsType {
+  suggestDeploymentName: boolean;
+  preferSuites: string[] | null;
+  hasApiToken: boolean;
+}
+
 export const settingRouter = createTRPCRouter({
-  get: protectedProcedure.query(async ({ }) => {
+  deploymentApproveRequired: protectedProcedure.query(async ({ }) => {
     const client = createApiClient();
     const headers = await getAuthHeaders();
     const { data, error, response } = await client.GET("/v1/admin/setting", { headers });
     if (error) return handleApiError("get setting", error, response);
 
-    return { data };
+    return { data: data.deployment_approve_required };
   }),
 
-  suggestDeploymentName: protectedProcedure.query(async ({ ctx }) => {
-    const recs = await ctx.db.select().from(settings).where(eq(settings.key, "suggest-deployment-name"));
-    return { data: recs[0]?.value === "true" };
-  }),
-
-  hasApiToken: protectedProcedure.query(async ({ ctx }) => {
-    const recs = await ctx.db.select().from(settings).where(eq(settings.key, "api-token"));
-    return { data: recs.length > 0 };
+  getLocal: protectedProcedure.query(async ({ ctx }) => {
+    const recs = await ctx.db.select().from(settings);
+    return recs.reduce((acc, rec) => {
+      if (rec.key === "prefer-suites") {
+        acc.preferSuites = rec.value ? (JSON.parse(rec.value) as string[]) : null;
+      } else if (rec.key === "suggest-deployment-name") {
+        acc.suggestDeploymentName = rec.value === "true";
+      } else if (rec.key === "api-token") {
+        acc.hasApiToken = rec.value !== null;
+      }
+      return acc;
+    }, { suggestDeploymentName: false, preferSuites: null, hasApiToken: false } as LocalSettingsType);
   }),
 
   bootstrap: protectedProcedure.mutation(async ({ ctx }) => {
@@ -55,13 +66,7 @@ export const settingRouter = createTRPCRouter({
     if (tokenError) return handleApiError("bootstrap", tokenError, tokenResponse);
 
     const encrypted = await encryptApiToken(token.id);
-    await ctx.db
-      .insert(settings)
-      .values({ key: "api-token", value: encrypted })
-      .onConflictDoUpdate({
-        target: [settings.key],
-        set: { value: encrypted, updatedAt: sql`NOW()` },
-      });
+    await updateSetting(ctx.db, "api-token", encrypted);
 
     return { data: true, error: null };
   }),
@@ -72,18 +77,21 @@ export const settingRouter = createTRPCRouter({
         apiToken: z.string().optional(),
         deploymentApproveRequired: z.boolean().optional(),
         suggestDeploymentName: z.boolean().optional(),
+        preferSuites: z.array(z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.suggestDeploymentName !== undefined) {
+        await updateSetting(ctx.db, "suggest-deployment-name", input.suggestDeploymentName ? "true" : "false");
+      }
+
+      if (input.preferSuites !== undefined) {
+        await updateSetting(ctx.db, "prefer-suites", JSON.stringify(input.preferSuites));
+      }
+
       if (input.apiToken) {
         const encrypted = await encryptApiToken(input.apiToken);
-        await ctx.db
-          .insert(settings)
-          .values({ key: "api-token", value: encrypted })
-          .onConflictDoUpdate({
-            target: [settings.key],
-            set: { value: encrypted, updatedAt: sql`NOW()` },
-          });
+        await updateSetting(ctx.db, "api-token", encrypted);
         await flushApiToken();
       }
 
@@ -99,19 +107,13 @@ export const settingRouter = createTRPCRouter({
         if (error) return handleApiError("update setting", error, response);
       }
 
-      if (input.suggestDeploymentName !== undefined) {
-        await ctx.db
-          .insert(settings)
-          .values({
-            key: "suggest-deployment-name",
-            value: input.suggestDeploymentName ? "true" : "false",
-          })
-          .onConflictDoUpdate({
-            target: [settings.key],
-            set: { value: input.suggestDeploymentName ? "true" : "false", updatedAt: sql`NOW()` },
-          });
-      }
-
       return { data: true, error: null };
     }),
 });
+
+async function updateSetting(db: DatabaseType, key: string, value: string) {
+  await db
+    .insert(settings)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: [settings.key], set: { value, updatedAt: sql`NOW()` } });
+}

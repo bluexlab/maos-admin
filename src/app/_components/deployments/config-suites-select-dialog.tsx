@@ -22,33 +22,30 @@ import { Label } from "~/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { api } from "~/trpc/react";
 
-type Deployment = {
-  id: number;
-  name: string;
-};
-
 export default function ConfigSuitesSelectDialog({
   open,
   availableSuites,
   selectedSuites,
+  selectedDeploymentIds,
   onSelected,
   onOpenChange,
 }: {
   open: boolean;
   availableSuites: string[];
   selectedSuites: string[];
+  selectedDeploymentIds: number[];
   onOpenChange: (open: boolean) => void;
   onSelected: (selected: string[], deployments: number[]) => void;
 }) {
   const [selected, setSelected] = useState(selectedSuites);
-  const [addedDeployments, setAddedDeployments] = useState<Deployment[]>([]);
+  const [addedDeploymentIds, setAddedDeploymentIds] = useState<number[]>(selectedDeploymentIds);
   const [openAddDeployment, setOpenAddDeployment] = useState(false);
   const [search, setSearch] = useState("");
   const { data: deployments, isLoading } = api.deployments.list.useQuery({
     name: search,
   });
   const availableDeployments = deployments?.data?.filter(
-    (d) => !addedDeployments.find((a) => a.id === d.id),
+    (d) => !addedDeploymentIds.find((a) => a === d.id),
   );
 
   useEffect(() => {
@@ -77,14 +74,16 @@ export default function ConfigSuitesSelectDialog({
               <Label htmlFor={`checkbox_${index}`}>{suite}</Label>
             </div>
           ))}
-          {addedDeployments.map((d) => (
-            <div key={d.id} className="flex items-center gap-2">
+          {addedDeploymentIds.map((id) => (
+            <div key={id} className="flex items-center gap-2">
               <Checkbox
-                id={`checkbox_d_${d.id}`}
+                id={`checkbox_d_${id}`}
                 checked={true}
-                onClick={() => setAddedDeployments(addedDeployments.filter((a) => a.id !== d.id))}
+                onClick={() => setAddedDeploymentIds(addedDeploymentIds.filter((a) => a !== id))}
               />
-              <Label htmlFor={`checkbox_d_${d.id}`}>{d.name}</Label>
+              <Label htmlFor={`checkbox_d_${id}`}>
+                {deployments?.data?.find((d) => d.id === id)?.name}
+              </Label>
             </div>
           ))}
 
@@ -117,7 +116,7 @@ export default function ConfigSuitesSelectDialog({
                           key={d.id}
                           onSelect={() => {
                             setOpenAddDeployment(false);
-                            setAddedDeployments([...addedDeployments, d]);
+                            setAddedDeploymentIds([...addedDeploymentIds, d.id]);
                           }}
                         >
                           {d.name} <p className="hidden">{d.id}</p>
@@ -138,10 +137,7 @@ export default function ConfigSuitesSelectDialog({
             type="button"
             className="w-40"
             onClick={() => {
-              onSelected(
-                selected,
-                addedDeployments.map((d) => d.id),
-              );
+              onSelected(selected, addedDeploymentIds);
               onOpenChange(false);
             }}
           >

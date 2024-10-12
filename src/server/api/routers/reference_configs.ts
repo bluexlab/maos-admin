@@ -1,15 +1,8 @@
+import { concat, filter, find, flatMap, get, groupBy, includes, map, mapValues, uniq } from "lodash-es";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createApiClient, getAuthHeaders, handleApiError } from "./common";
-
-type ReferenceConfigSuite = {
-  actor_name: string;
-  config_suites: {
-    suite_name: string;
-    configs: Record<string, string>;
-  }[];
-};
 
 export const referenceConfigsRouter = createTRPCRouter({
   suites: protectedProcedure.query(async ({ }) => {
@@ -50,39 +43,53 @@ export const referenceConfigsRouter = createTRPCRouter({
           referenceConfigs.error,
           referenceConfigs.response,
         );
+
       for (const deployment of deployments) {
         if (deployment.error) {
           return handleApiError("get deployment", deployment.error, deployment.response);
         }
       }
 
-      const result = referenceConfigs.data.data.reduce(
-        (acc, curr) => {
-          acc[curr.actor_name] = {
-            ...curr,
-            config_suites: curr.config_suites.filter((cs) =>
-              input.referenceConfigs?.includes(cs.suite_name),
-            ),
-          };
-          return acc;
-        },
-        {} as Record<string, ReferenceConfigSuite>,
+      // Aggregate deployment suites and filter reference suites, then combine and structure them
+
+      // Aggregate deployment and filtered reference suites
+      const allSuites = concat(
+        // Extract suites from deployments
+        flatMap(deployments, ({ data }) =>
+          data ? map(data.configs, config => ({
+            actor_name: config.actor_name,
+            suite_name: data.name,
+            configs: config.content,
+          })) : []
+        ),
+        // Extract and filter suites from reference configurations
+        flatMap(referenceConfigs.data.data, ({ actor_name, config_suites }) =>
+          map(
+            filter(config_suites, cs => includes(input.referenceConfigs, cs.suite_name)),
+            cs => ({
+              actor_name,
+              suite_name: cs.suite_name,
+              configs: cs.configs,
+            })
+          )
+        )
       );
 
-      for (const deployment of deployments) {
-        if (deployment.data?.configs) {
-          for (const config of deployment.data.configs) {
-            const { actor_name, content } = config;
-            const suite_name = deployment.data.name;
+      // Retrieve all unique suite names
+      const allSuiteNames = uniq(map(allSuites, 'suite_name'));
 
-            if (!result[actor_name]) {
-              result[actor_name] = { actor_name, config_suites: [] };
-            }
-            result[actor_name].config_suites.push({ suite_name, configs: content });
-          }
-        }
-      }
+      // Group suites by actor and suite names
+      const groupedSuites = groupBy(allSuites, 'actor_name');
 
-      return { data: result };
+      // Ensure each actor has all suite names, filling missing with empty configs
+      const actorsWithCompleteSuites = mapValues(groupedSuites, (suites, actor_name) => ({
+        actor_name,
+        config_suites: map(allSuiteNames, suite_name => ({
+          suite_name,
+          configs: get(find(suites, { suite_name }), 'configs', {}),
+        })),
+      }));
+
+      return { data: actorsWithCompleteSuites };
     }),
 });

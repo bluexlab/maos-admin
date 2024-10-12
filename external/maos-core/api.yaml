@@ -1342,8 +1342,10 @@ paths:
               - approved
               - rejected
               - deployed
+              - deploying
               - retired
               - cancelled
+              - failed
           description: Filter by deployment status.
         - in: query
           name: name

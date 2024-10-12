@@ -10,13 +10,23 @@ import { getServerAuthSession } from "~/server/auth";
 import { api } from "~/trpc/server";
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const [session, settings, allSuites] = await Promise.all([
+  const [
+    session,
+    localSettings,
+    deploymentApproveRequired,
+    allSuites,
+    deployedDeployments,
+    allActors,
+  ] = await Promise.all([
     getServerAuthSession(),
-    api.settings.get(),
+    api.settings.getLocal(),
+    api.settings.deploymentApproveRequired(),
     api.referenceConfigs.suites(),
+    api.deployments.list({ status: "deployed" }),
+    api.actors.list({}),
   ]);
 
-  const approveRequired = settings.data?.deployment_approve_required ?? false;
+  const approveRequired = deploymentApproveRequired.data ?? false;
   const deploymentId = Result.fromThrowable(
     () => parseInt(params.id),
     (e) => (e instanceof Error ? e.message : String(e)),
@@ -26,6 +36,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       result.data ? ok(result.data) : err(new Error(result.error)),
     ),
   );
+  const activeDeploymentId = deployedDeployments.data?.[0]?.id;
 
   return (
     <AppFrame session={session}>
@@ -49,8 +60,11 @@ export default async function Page({ params }: { params: { id: string } }) {
           ) : (
             <DeploymentEditor
               deploymentId={dep.id}
+              activeDeploymentId={activeDeploymentId}
               session={session!}
               allSuites={allSuites.data ?? []}
+              preferSuites={localSettings.preferSuites ?? allSuites.data ?? []}
+              allActors={allActors.map((a) => a.data).unwrapOr([])}
               approveRequired={approveRequired}
               restartable={dep.status === "deployed"}
             />

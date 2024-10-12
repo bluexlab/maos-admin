@@ -2088,7 +2088,7 @@ export interface operations {
                 /** @description Filter by if the given user is a reviewer */
                 reviewer?: string;
                 /** @description Filter by deployment status. */
-                status?: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "retired" | "cancelled";
+                status?: "draft" | "reviewing" | "approved" | "rejected" | "deployed" | "deploying" | "retired" | "cancelled" | "failed";
                 /** @description Filter by deployment name */
                 name?: string;
                 /** @description Filter by list of deployment id */

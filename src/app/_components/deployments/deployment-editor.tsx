@@ -22,33 +22,47 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Skeleton } from "~/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { api } from "~/trpc/react";
 import { PublishDeploymentAlert, RemoveDeploymentAlert, SubmitDeploymentAlert } from "./alerts";
 import { ConfigEditor } from "./config-editor";
-import { ConfigViewer } from "./config-viewer";
 import ConfigSuitesSelectDialog from "./config-suites-select-dialog";
+import { ConfigViewer } from "./config-viewer";
+
+interface Actor {
+  id: number;
+  name: string;
+}
 
 export default function DeploymentEditor({
   deploymentId,
+  activeDeploymentId,
   session,
   approveRequired,
   allSuites,
+  preferSuites,
+  allActors,
   restartable,
 }: {
   deploymentId: number;
+  activeDeploymentId?: number;
   session: Session;
   approveRequired: boolean;
   allSuites: string[];
+  preferSuites: string[];
+  allActors: Actor[];
   restartable: boolean;
 }) {
   const router = useRouter();
   const [reviewers, setReviewers] = useState<string[]>([]);
-  const [selectedSuites, setSelectedSuites] = useState<string[]>(allSuites);
+  const [selectedSuites, setSelectedSuites] = useState<string[]>(preferSuites);
   const [openSubmitDeploymentAlert, setOpenSubmitDeploymentAlert] = useState(false);
   const [openPublishDeploymentAlert, setOpenPublishDeploymentAlert] = useState(false);
   const [openRemoveDeploymentAlert, setOpenRemoveDeploymentAlert] = useState(false);
   const [openConfigSuitesSelectDialog, setOpenConfigSuitesSelectDialog] = useState(false);
-  const [addedDeploymentIds, setAddedDeploymentIds] = useState<number[]>([]);
+  const [addedDeploymentIds, setAddedDeploymentIds] = useState<number[]>(
+    activeDeploymentId ? [activeDeploymentId] : [],
+  );
 
   const { data, refetch, isLoading } = api.deployments.get.useQuery({ id: deploymentId });
   const { data: users } = api.users.list.useQuery();
@@ -60,6 +74,10 @@ export default function DeploymentEditor({
   const editingDeployment = data?.data;
   const actors = editingDeployment?.configs?.sort((a, b) =>
     a.actor_name.localeCompare(b.actor_name),
+  );
+
+  const missingActors = Object.keys(referenceConfigs?.data ?? {}).filter(
+    (actor) => !allActors.find((a) => a.name === actor),
   );
 
   // Set reviewers from deployment
@@ -220,13 +238,23 @@ export default function DeploymentEditor({
             <CardTitle>Actors Config</CardTitle>
             <div>
               {restartable && (
-                <Button variant="outline" onClick={() => restartDeployment()}>
-                  <RotateCcw />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={() => restartDeployment()}>
+                      <RotateCcw />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Restart deployment</TooltipContent>
+                </Tooltip>
               )}
-              <Button variant="outline" onClick={() => setOpenConfigSuitesSelectDialog(true)}>
-                <Settings />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={() => setOpenConfigSuitesSelectDialog(true)}>
+                    <Settings />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Select reference config suites and deployments</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </CardHeader>
@@ -258,6 +286,15 @@ export default function DeploymentEditor({
                 </AccordionItem>
               ))}
             </Accordion>
+          )}
+          {missingActors.length > 0 && (
+            <div className="my-4 flex flex-col gap-2">
+              {missingActors.map((actor) => (
+                <div key={actor} className="text-red-500">
+                  Missing actor: {actor}
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -314,6 +351,7 @@ export default function DeploymentEditor({
       <ConfigSuitesSelectDialog
         availableSuites={allSuites}
         selectedSuites={selectedSuites}
+        selectedDeploymentIds={addedDeploymentIds}
         open={openConfigSuitesSelectDialog}
         onSelected={(selected, deployments) => {
           setSelectedSuites(selected);

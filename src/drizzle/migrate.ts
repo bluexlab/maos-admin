@@ -4,7 +4,7 @@ import postgres from "postgres";
 import * as schema from './schema';
 
 async function main() {
-  console.log('Migrating database on', process.env.DATABASE_URL);
+  console.info('Migrating database on', process.env.DATABASE_URL);
   const conn = postgres(process.env.DATABASE_URL ?? "");
   const db = drizzle(conn, { schema, logger: false });
   await migrate(db, { migrationsFolder: './drizzle' });

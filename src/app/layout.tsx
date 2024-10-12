@@ -6,6 +6,7 @@ import NextTopLoader from "nextjs-toploader";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { Toaster } from "~/components/ui/sonner";
+import { TooltipProvider } from "~/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "MAOS Admin",
@@ -18,7 +19,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${GeistSans.variable} dark`}>
       <body>
         <NextTopLoader color="#2292dd" />
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <TooltipProvider delayDuration={200} skipDelayDuration={100}>
+            {children}
+          </TooltipProvider>
+        </TRPCReactProvider>
         <Toaster theme="light" position="top-center" richColors={true} closeButton />
       </body>
     </html>
