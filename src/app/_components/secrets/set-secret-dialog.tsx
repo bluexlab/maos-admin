@@ -30,7 +30,7 @@ export function SetSecretDialog({
   const mutation = api.secrets.updateKey.useMutation({
     onSuccess: () => {
       toast.success("Key updated");
-      onOpenChange(false);
+      handleOpenChange(false);
       router.refresh();
     },
     onError: (error) => {
@@ -38,9 +38,14 @@ export function SetSecretDialog({
     },
   });
 
+  const handleOpenChange = (open: boolean) => {
+    setValue("");
+    onOpenChange(open);
+  };
+
   const loading = mutation.status === "pending";
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Set Secret</DialogTitle>
@@ -70,7 +75,7 @@ export function SetSecretDialog({
               disabled={loading}
               className="w-40"
               onClick={() => {
-                onOpenChange(false);
+                handleOpenChange(false);
               }}
             >
               Cancel

@@ -961,6 +961,10 @@ export interface components {
         Setting: {
             deployment_approve_required: boolean;
             display_name: string;
+            enable_secrets_backup: boolean;
+            secrets_backup_public_key?: string;
+            secrets_backup_bucket?: string;
+            secrets_backup_prefix?: string;
         };
         ReferenceConfigSuite: {
             actor_name: string;
@@ -2145,6 +2149,11 @@ export interface operations {
                     name: string;
                     reviewers?: string[];
                     user: string;
+                    /**
+                     * Format: int64
+                     * @description Clone from deployment id
+                     */
+                    clone_from?: number;
                 };
             };
         };
@@ -2598,6 +2607,13 @@ export interface operations {
                 "application/json": {
                     display_name?: string;
                     deployment_approve_required?: boolean;
+                    enable_secrets_backup?: boolean;
+                    /** @description The public key for encrypting secrets backup */
+                    secrets_backup_public_key?: string;
+                    /** @description The S3 bucket for storing secrets backup */
+                    secrets_backup_bucket?: string;
+                    /** @description The S3 prefix for storing secrets backup */
+                    secrets_backup_prefix?: string;
                 };
             };
         };
@@ -2607,9 +2623,7 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Setting"];
-                };
+                content?: never;
             };
             400: components["responses"]["400"];
             /** @description Unauthorized */

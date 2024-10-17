@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -24,6 +25,20 @@ const DeploymentList = ({
   suggestDeploymentName: boolean;
 }) => {
   const [openAddDeploymentDialog, setOpenAddDeploymentDialog] = useState(false);
+  const router = useRouter();
+  useEffect(() => {
+    const hasDeployingDeployment = deployments.some(
+      (deployment) => deployment.status === "deploying",
+    );
+
+    if (hasDeployingDeployment) {
+      const intervalId = setInterval(() => {
+        router.refresh();
+      }, 2000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [deployments, router]);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -77,6 +92,9 @@ const DeploymentList = ({
                   <div className="flex items-center gap-2">
                     <Button asChild>
                       <Link href={`/deployments/${deployment.id}`}>View</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link href={`/deployments/clone/${deployment.id}`}>Clone</Link>
                     </Button>
                     {["deployed", "failed", "cancelled"].includes(deployment.status) && (
                       <Button asChild>

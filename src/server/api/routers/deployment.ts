@@ -88,6 +88,7 @@ export const deploymentRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
+        cloneFrom: z.number().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -96,7 +97,8 @@ export const deploymentRouter = createTRPCRouter({
       const { data, error, response } = await client.POST("/v1/admin/deployments", {
         headers,
         body: {
-          ...input,
+          name: input.name,
+          clone_from: input.cloneFrom,
           user: ctx.session.user.email!,
         },
       });

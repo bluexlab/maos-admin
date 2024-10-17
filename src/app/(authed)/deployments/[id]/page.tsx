@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import AppFrame from "~/app/_components/app-frame";
 import DeploymentEditor from "~/app/_components/deployments/deployment-editor";
+import DeploymentNameEditable from "~/app/_components/deployments/deployment-name-editable";
 import DeploymentReviewer from "~/app/_components/deployments/deployment-reviewer";
 import { Button } from "~/components/ui/button";
 import { getServerAuthSession } from "~/server/auth";
@@ -46,12 +47,11 @@ export default async function Page({ params }: { params: { id: string } }) {
             <ChevronLeft /> Back
           </Link>
         </Button>
-        <h1 className="text-lg font-semibold text-gray-300 md:text-2xl">
-          Deployment -
-          <strong className="mx-1 text-white">
-            {deployment.map((c) => c.name).unwrapOr("Unknown")}
-          </strong>
-        </h1>
+        {deployment
+          .map((dep) => (
+            <DeploymentNameEditable key={dep.id} deploymentId={dep.id} initialName={dep.name} />
+          ))
+          .unwrapOr(null)}
       </div>
       {deployment.match(
         (dep) =>
