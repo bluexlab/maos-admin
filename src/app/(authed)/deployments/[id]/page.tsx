@@ -7,6 +7,7 @@ import DeploymentEditor from "~/app/_components/deployments/deployment-editor";
 import DeploymentNameEditable from "~/app/_components/deployments/deployment-name-editable";
 import DeploymentReviewer from "~/app/_components/deployments/deployment-reviewer";
 import { Button } from "~/components/ui/button";
+import { fetchAllPages } from "~/lib/fetcher";
 import { getServerAuthSession } from "~/server/auth";
 import { api } from "~/trpc/server";
 
@@ -24,7 +25,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     api.settings.deploymentApproveRequired(),
     api.referenceConfigs.suites(),
     api.deployments.list({ status: "deployed" }),
-    api.actors.list({}),
+    fetchAllPages((page) => api.actors.list({ page })),
   ]);
 
   const approveRequired = deploymentApproveRequired.data ?? false;
@@ -64,7 +65,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               session={session!}
               allSuites={allSuites.data ?? []}
               preferSuites={localSettings.preferSuites ?? allSuites.data ?? []}
-              allActors={allActors.map((a) => a.data).unwrapOr([])}
+              allActors={allActors.unwrapOr([])}
               approveRequired={approveRequired}
               restartable={dep.status === "deployed"}
             />

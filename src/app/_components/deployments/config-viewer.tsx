@@ -34,28 +34,46 @@ export function ConfigViewer({ config, references }: ConfigEditorProps) {
           </tr>
         </thead>
         <tbody>
-          {Object.entries(config.content).map(([key, value]) => (
-            <tr key={key}>
-              <td className="p-1">
-                <Label className="col-span-2">{key}</Label>
-              </td>
-              <td className="p-1">
-                <Input className="col-span-2" value={value} disabled />
-              </td>
-              {references.map((reference) => (
-                <td key={reference.suite_name} className="p-1">
-                  <Input
-                    className={cn(
-                      "disabled:opacity-100",
-                      reference.configs[key] === value ? "bg-green-800" : "bg-red-800",
-                    )}
-                    disabled
-                    value={reference.configs[key]}
-                  />
+          {Object.entries(config.content)
+            .sort(([a], [b]) => {
+              // Sort KUBE_MIGRATE to the top, then KUBE_, then the rest
+              const getPriority = (key: string): number => {
+                if (key.startsWith("KUBE_MIGRATE")) return 0;
+                if (key.startsWith("KUBE_")) return 1;
+                return 2;
+              };
+
+              const priorityA = getPriority(a);
+              const priorityB = getPriority(b);
+
+              if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+              }
+
+              return a.localeCompare(b);
+            })
+            .map(([key, value]) => (
+              <tr key={key}>
+                <td className="p-1">
+                  <Label className="col-span-2">{key}</Label>
                 </td>
-              ))}
-            </tr>
-          ))}
+                <td className="p-1">
+                  <Input className="col-span-2" value={value} disabled />
+                </td>
+                {references.map((reference) => (
+                  <td key={reference.suite_name} className="p-1">
+                    <Input
+                      className={cn(
+                        "disabled:opacity-100",
+                        reference.configs[key] === value ? "bg-green-800" : "bg-red-800",
+                      )}
+                      disabled
+                      value={reference.configs[key]}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
         </tbody>
       </table>
 
